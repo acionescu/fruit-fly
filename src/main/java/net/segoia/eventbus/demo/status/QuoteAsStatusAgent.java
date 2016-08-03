@@ -7,6 +7,7 @@ import net.segoia.event.eventbus.Event;
 import net.segoia.event.eventbus.EventHandle;
 import net.segoia.event.eventbus.EventTracker;
 import net.segoia.event.eventbus.constants.Events;
+import net.segoia.event.eventbus.peers.AgentNode;
 import net.segoia.event.eventbus.peers.PeerEventContext;
 import net.segoia.event.eventbus.util.EBus;
 
@@ -16,14 +17,13 @@ import net.segoia.event.eventbus.util.EBus;
  * @author adi
  *
  */
-public class QuoteAsStatusAgent extends LocalNodeAgent {
+public class QuoteAsStatusAgent extends AgentNode {
 
     private long statusUpdatePeriod;
 
     private Timer timer;
 
     private String status;
-    
 
     public QuoteAsStatusAgent() {
 	super();
@@ -36,7 +36,7 @@ public class QuoteAsStatusAgent extends LocalNodeAgent {
 
 	/* update status every 2 minutes */
 	statusUpdatePeriod = 1000 * 60 * 2;
-	
+
 	/* for now start immediately, ideally we should wait for a registered event from the main node */
 	start();
     }
@@ -51,7 +51,7 @@ public class QuoteAsStatusAgent extends LocalNodeAgent {
 	    }
 	}, 1, statusUpdatePeriod);
     }
-    
+
     private void updateStatus() {
 	setStatus(QuotesChest.getRandomQuote());
     }
@@ -65,14 +65,15 @@ public class QuoteAsStatusAgent extends LocalNodeAgent {
 	EventHandle eh = Events.builder().peer().status().updated().topic(getId()).getHandle();
 	if (eh.isAllowed()) {
 	    eh.addParam("status", status);
-	    //TODO: maybe we should post this via the main node reference
+	    // TODO: maybe we should post this via the main node reference
 	    forwardToAll(eh.event());
 	}
     }
 
     @Override
-    public void terminate() {
+    public void cleanUp() {
 	timer.cancel();
+	System.out.println("Canceling timer");
     }
 
     @Override
@@ -82,7 +83,7 @@ public class QuoteAsStatusAgent extends LocalNodeAgent {
     }
 
     @Override
-    protected EventTracker postInternally(Event event) {
+    protected EventTracker handleEvent(Event event) {
 	return null;
     }
 

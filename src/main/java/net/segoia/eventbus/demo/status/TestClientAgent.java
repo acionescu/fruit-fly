@@ -4,7 +4,7 @@ import net.segoia.event.eventbus.Event;
 import net.segoia.event.eventbus.EventTracker;
 import net.segoia.event.eventbus.peers.AgentNode;
 
-public class StatusAppStatsAgent extends AgentNode{
+public class TestClientAgent extends AgentNode{
 
     @Override
     protected void init() {

@@ -6,11 +6,14 @@ import net.segoia.event.eventbus.EventHandle;
 import net.segoia.event.eventbus.EventTracker;
 import net.segoia.event.eventbus.constants.EventParams;
 import net.segoia.event.eventbus.constants.Events;
+import net.segoia.event.eventbus.peers.AgentNode;
 import net.segoia.event.eventbus.peers.PeerEventContext;
+import net.segoia.event.eventbus.peers.RemoteEventContext;
+import net.segoia.event.eventbus.peers.RemoteEventHandler;
 import net.segoia.event.eventbus.util.EBus;
 import net.segoia.util.data.LRUCache;
 
-public class AppInitAgent extends LocalNodeAgent {
+public class AppInitAgent extends AgentNode {
 
     private LRUCache<String, StatusPeerView> recentPeers = new LRUCache<>(StatusApp.maxPartnersPerUser);
     
@@ -47,7 +50,7 @@ public class AppInitAgent extends LocalNodeAgent {
 		
 		if(eh.isAllowed()) {
 		    eh.addParam(EventParams.clientId, peerId);
-		    eh.addParam(StatusApp.STATUS, "Hi, I'm visitor "+StatusApp.stats.incVisitors());
+		    eh.addParam(StatusApp.STATUS, "Hi, I'm visitor "+StatusApp.stats.newPeer());
 		    eh.addParam(EventParams.peers, recentPeers);
 		    eh.send(peerId);
 		}
@@ -61,13 +64,13 @@ public class AppInitAgent extends LocalNodeAgent {
     }
 
     @Override
-    public void terminate() {
+    public void cleanUp() {
 	// TODO Auto-generated method stub
 
     }
 
     @Override
-    protected EventTracker postInternally(Event event) {
+    protected EventTracker handleEvent(Event event) {
 	// TODO Auto-generated method stub
 	return null;
     }

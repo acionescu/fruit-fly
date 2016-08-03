@@ -6,8 +6,13 @@ public class StatusAppStats {
     
     
     
-    public long incVisitors() {
+    public long newPeer() {
+	activeUsers++;
 	return ++visitors;
+    }
+    
+    public void peerRemoved() {
+	activeUsers--;
     }
     
     public long visitors() {
