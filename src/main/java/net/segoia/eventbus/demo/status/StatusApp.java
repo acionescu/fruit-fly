@@ -4,6 +4,7 @@ import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 import javax.servlet.annotation.WebListener;
 
+import net.segoia.event.eventbus.EventsRepository;
 import net.segoia.event.eventbus.util.EBus;
 
 @WebListener
@@ -19,14 +20,15 @@ public class StatusApp implements ServletContextListener {
     @Override
     public void contextInitialized(ServletContextEvent sce) {
 	/* start app init agent */
-	new AppInitAgent().init();
+	new StatusAppManagerAgent();
 
 	/* start quote agents */
 
 	for (int i = 0; i < maxQuoteAgents; i++) {
 	    QuoteAsStatusAgent ag = new QuoteAsStatusAgent();
-	    ag.init();
 	}
+	
+	EventsRepository.load();
 
     }
 

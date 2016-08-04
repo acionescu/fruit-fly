@@ -7,12 +7,6 @@ import net.segoia.event.eventbus.peers.AgentNode;
 public class StatusAppStatsAgent extends AgentNode{
 
     @Override
-    protected void init() {
-	// TODO Auto-generated method stub
-	
-    }
-
-    @Override
     public void cleanUp() {
 	// TODO Auto-generated method stub
 	
@@ -22,6 +16,18 @@ public class StatusAppStatsAgent extends AgentNode{
     protected EventTracker handleEvent(Event event) {
 	// TODO Auto-generated method stub
 	return null;
+    }
+
+    @Override
+    protected void agentInit() {
+	// TODO Auto-generated method stub
+	
+    }
+
+    @Override
+    protected void registerHandlers() {
+	// TODO Auto-generated method stub
+	
     }
 
 }

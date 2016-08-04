@@ -3,6 +3,7 @@ package net.segoia.eventbus.web.websocket.client;
 import java.net.URI;
 import java.net.URISyntaxException;
 
+import net.segoia.event.conditions.TrueCondition;
 import net.segoia.event.eventbus.Event;
 import net.segoia.event.eventbus.EventContext;
 import net.segoia.event.eventbus.EventTracker;
@@ -33,8 +34,10 @@ public class ParallelWebsocketClientNode extends EventNode {
 
     @Override
     protected void init() {
-	/* make sure we set autorelay enabled otherwise, all events coming from the websocket will be blocked by default */
+	/* make sure we set autorelay enabled, otherwise all events coming from the websocket will be blocked by default */
 	config.setAutoRelayEnabled(true);
+	/* let the client send anything */
+	config.setDefaultRequestedEvents(new TrueCondition());
     }
 
     @Override
@@ -53,17 +56,5 @@ public class ParallelWebsocketClientNode extends EventNode {
 	return new ParallelClientWebsocketRelay(peerId, this, uri);
     }
 
-    /* (non-Javadoc)
-     * @see net.segoia.event.eventbus.peers.EventNode#isEventForwardingAllowed(net.segoia.event.eventbus.EventContext, java.lang.String)
-     */
-    @Override
-    public boolean isEventForwardingAllowed(EventContext ec, String peerId) {
-	/* since we're acting as a proxy we have to let all the events pass */
-	return true;
-    }
-
-    
-    
-    
     
 }

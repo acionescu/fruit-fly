@@ -6,11 +6,11 @@ package net.segoia.eventbus.demo.status;
  * @author adi
  *
  */
-public class StatusPeerView {
+public class PeerStatusView {
     private String peerId;
     private String status;
     
-    public StatusPeerView(String peerId, String status) {
+    public PeerStatusView(String peerId, String status) {
 	super();
 	this.peerId = peerId;
 	this.status = status;
@@ -53,7 +53,7 @@ public class StatusPeerView {
 	    return false;
 	if (getClass() != obj.getClass())
 	    return false;
-	StatusPeerView other = (StatusPeerView) obj;
+	PeerStatusView other = (PeerStatusView) obj;
 	if (peerId == null) {
 	    if (other.peerId != null)
 		return false;

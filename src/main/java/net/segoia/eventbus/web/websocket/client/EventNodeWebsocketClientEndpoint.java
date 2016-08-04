@@ -1,5 +1,7 @@
 package net.segoia.eventbus.web.websocket.client;
 
+import java.util.concurrent.Future;
+
 import javax.websocket.ClientEndpoint;
 import javax.websocket.CloseReason;
 import javax.websocket.OnClose;
@@ -9,6 +11,7 @@ import javax.websocket.Session;
 
 import net.segoia.event.eventbus.Event;
 import net.segoia.event.eventbus.EventContext;
+import net.segoia.event.eventbus.EventHandle;
 import net.segoia.event.eventbus.constants.EventParams;
 import net.segoia.event.eventbus.constants.Events;
 import net.segoia.eventbus.web.websocket.WsEndpoint;
@@ -39,6 +42,18 @@ public class EventNodeWebsocketClientEndpoint extends WsEndpoint{
 	} catch (Exception e) {
 	    e.printStackTrace();
 	}
+    }
+    
+    
+
+    /* (non-Javadoc)
+     * @see net.segoia.eventbus.web.websocket.WsEndpoint#sendEvent(net.segoia.event.eventbus.Event)
+     */
+    @Override
+    public Future<Void> sendEvent(Event event) {
+	/* replace local id with remote id */
+	event.replaceRelay(getLocalNodeId(), remoteClientId);
+	return super.sendEvent(event);
     }
 
     @OnClose
@@ -72,7 +87,13 @@ public class EventNodeWebsocketClientEndpoint extends WsEndpoint{
             /* replace remote id with local id */
             if(wse.remoteClientId.equals(event.to())){
         	event.to(wse.getLocalNodeId());
-        	System.out.println(event.getEt()+" : "+wse.remoteClientId +" -> "+wse.getLocalNodeId());
+        	EventHandle eh = Events.builder().scope("WSCLIENT").category("EVENT").name("map-dest-id").getHandle();
+        	if(eh.isAllowed()) {
+        	    eh.addParam("old", wse.remoteClientId);
+        	    eh.addParam("new", wse.getLocalNodeId());
+        	    eh.post();
+        	}
+        	
             }
 	    wse.localRelay.onLocalEvent(new EventContext(event, null));
     	
@@ -109,5 +130,11 @@ public class EventNodeWebsocketClientEndpoint extends WsEndpoint{
     	
         }
     };
+
+    @Override
+    public void onError(Throwable e) {
+	localRelay.terminate();
+	
+    }
     
 }

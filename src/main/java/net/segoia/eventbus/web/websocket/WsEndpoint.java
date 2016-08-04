@@ -35,8 +35,11 @@ public abstract class WsEndpoint {
      * Called when a peer connection is accepted
      */
     public abstract void onAccepted();
+    
+    public abstract void onError(Throwable e);
 
     public Future<Void> sendEvent(Event event) {
+	WsEndpoint endpoint = this;
 	return (Future<Void>) sendThreadPool.submit(new Callable<Void>() {
 
 	    @Override
@@ -46,6 +49,7 @@ public abstract class WsEndpoint {
 			session.getBasicRemote().sendText(event.toJson());
 		    } catch (IOException e) {
 			e.printStackTrace();
+			endpoint.onError(e);
 		    }
 		}
 		return null;

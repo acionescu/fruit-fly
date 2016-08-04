@@ -3,12 +3,9 @@ package net.segoia.eventbus.demo.status;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import net.segoia.event.conditions.TrueCondition;
 import net.segoia.event.eventbus.Event;
-import net.segoia.event.eventbus.EventHandle;
 import net.segoia.event.eventbus.EventTracker;
-import net.segoia.event.eventbus.constants.Events;
-import net.segoia.event.eventbus.peers.AgentNode;
-import net.segoia.event.eventbus.peers.PeerEventContext;
 import net.segoia.event.eventbus.util.EBus;
 
 /**
@@ -17,31 +14,24 @@ import net.segoia.event.eventbus.util.EBus;
  * @author adi
  *
  */
-public class QuoteAsStatusAgent extends AgentNode {
+public class QuoteAsStatusAgent extends StatusAppClientAgent {
 
     private long statusUpdatePeriod;
 
     private Timer timer;
 
-    private String status;
-
-    public QuoteAsStatusAgent() {
-	super();
-    }
-
     @Override
-    protected void init() {
-	mainNode = EBus.getMainNode();
-	mainNode.registerPeer(this);
-
+    protected void agentInit() {
+	super.agentInit();
+	
 	/* update status every 2 minutes */
-	statusUpdatePeriod = 1000 * 60 * 2;
-
-	/* for now start immediately, ideally we should wait for a registered event from the main node */
-	start();
+	statusUpdatePeriod = 3000;//1000 * 60 * 2;
+	
+	mainNode = EBus.getMainNode();
+	mainNode.registerPeer(this,new TrueCondition());
     }
 
-    private void start() {
+    protected void start() {
 	timer = new Timer(true);
 	timer.scheduleAtFixedRate(new TimerTask() {
 
@@ -56,35 +46,11 @@ public class QuoteAsStatusAgent extends AgentNode {
 	setStatus(QuotesChest.getRandomQuote());
     }
 
-    private void setStatus(String status) {
-	this.status = status;
-	sendStatusUpdatedEvent();
-    }
-
-    private void sendStatusUpdatedEvent() {
-	EventHandle eh = Events.builder().peer().status().updated().topic(getId()).getHandle();
-	if (eh.isAllowed()) {
-	    eh.addParam("status", status);
-	    // TODO: maybe we should post this via the main node reference
-	    forwardToAll(eh.event());
-	}
-    }
-
     @Override
     public void cleanUp() {
 	timer.cancel();
 	System.out.println("Canceling timer");
     }
 
-    @Override
-    protected void handleRemoteEvent(PeerEventContext pc) {
-	/* Currently do nothing on remote events */
-
-    }
-
-    @Override
-    protected EventTracker handleEvent(Event event) {
-	return null;
-    }
 
 }

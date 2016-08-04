@@ -38,6 +38,7 @@ public class EventNodeWebsocketServerEndpoint extends WsEndpoint {
     public void onMessage(String message) {
 	try {
 	    Event event = Event.fromJson(message);
+	    
 	    state.handleEvent(event, this);
 	} catch (Exception e) {
 	    e.printStackTrace();
@@ -47,6 +48,7 @@ public class EventNodeWebsocketServerEndpoint extends WsEndpoint {
     @OnError
     public void onError(Throwable t) {
 	t.printStackTrace();
+	localNode.terminate();
     }
 
     protected void sendConnectedEvent() {

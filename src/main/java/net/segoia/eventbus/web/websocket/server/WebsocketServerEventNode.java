@@ -2,6 +2,7 @@ package net.segoia.eventbus.web.websocket.server;
 
 import java.util.concurrent.Future;
 
+import net.segoia.event.conditions.TrueCondition;
 import net.segoia.event.eventbus.AsyncEventTracker;
 import net.segoia.event.eventbus.Event;
 import net.segoia.event.eventbus.EventTracker;
@@ -18,6 +19,14 @@ public class WebsocketServerEventNode extends EventNode{
     public WebsocketServerEventNode(EventNodeWebsocketServerEndpoint ws) {
 	super();
 	this.ws=ws;
+	init();
+    }
+    
+    @Override
+    protected void init() {
+	config.setAutoRelayEnabled(true);
+	config.setDefaultRequestedEvents(new TrueCondition());
+	
     }
 
     @Override
@@ -34,12 +43,6 @@ public class WebsocketServerEventNode extends EventNode{
     
     public void onWsEvent(Event event) {
 	forwardToAll(event);
-    }
-
-    @Override
-    protected void init() {
-
-	
     }
 
     @Override

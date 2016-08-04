@@ -39,19 +39,6 @@
 				}
 			},
 			"priority": 0
-		},
-		"list2" : {
-			"instance" : {
-				"className" : "net.segoia.event.eventbus.test.TestEventListener",
-				"echoOn":true,
-				"listenerKey" : "userLoginEchoKey"
-			},
-			"priority" : 10,
-			"condition" : {
-				"id" : "userLoginCond",
-				"et" :"APP:USER:LOGIN"
-				},
-			"condPriority" : 50
 		}
 	}
 }
