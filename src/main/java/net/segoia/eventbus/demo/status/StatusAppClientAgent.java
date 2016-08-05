@@ -33,7 +33,7 @@ public class StatusAppClientAgent extends AgentNode {
 	    @Override
 	    public void handleRemoteEvent(RemoteEventContext<StatusAppClientAgent> rec) {
 		StatusAppInitEvent appInitEvent = (StatusAppInitEvent) rec.getEvent();
-		model = appInitEvent.getModel();
+		model = appInitEvent.getData().getModel();
 		start();
 	    }
 	});
@@ -43,7 +43,8 @@ public class StatusAppClientAgent extends AgentNode {
 	    @Override
 	    public void handleRemoteEvent(RemoteEventContext<StatusAppClientAgent> rec) {
 		PeersViewUpdateEvent event = (PeersViewUpdateEvent)rec.getEvent();
-		model.setPeersData(event.getPeersData());
+		model.setPeersData(event.getData().getPeersData());
+		System.out.println("refreshed");
 	    }
 	});
 
@@ -77,7 +78,9 @@ public class StatusAppClientAgent extends AgentNode {
 	if (eh.isAllowed()) {
 	    eh.addParam("status", model.getStatus());
 	    // TODO: maybe we should post this via the main node reference
-	    forwardToAll(eh.event());
+//	    forwardToAll(eh.event());
+	    
+	    forwardToAllKnown(eh.event());
 	}
     }
 
@@ -89,7 +92,7 @@ public class StatusAppClientAgent extends AgentNode {
 
     @Override
     protected EventTracker handleEvent(Event event) {
-
+	System.out.println(getId()+ ": handle: "+event);
 	return null;
     }
 

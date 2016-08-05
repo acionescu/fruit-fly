@@ -25,7 +25,7 @@ public class QuoteAsStatusAgent extends StatusAppClientAgent {
 	super.agentInit();
 	
 	/* update status every 2 minutes */
-	statusUpdatePeriod = 3000;//1000 * 60 * 2;
+	statusUpdatePeriod = 1000 * 60 * 2;
 	
 	mainNode = EBus.getMainNode();
 	mainNode.registerPeer(this,new TrueCondition());
@@ -52,5 +52,10 @@ public class QuoteAsStatusAgent extends StatusAppClientAgent {
 	System.out.println("Canceling timer");
     }
 
-
+    @Override
+    protected EventTracker handleEvent(Event event) {
+	
+	return null;
+    }
+    
 }

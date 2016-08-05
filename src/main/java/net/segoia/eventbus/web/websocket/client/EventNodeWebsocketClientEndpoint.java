@@ -51,8 +51,9 @@ public class EventNodeWebsocketClientEndpoint extends WsEndpoint{
      */
     @Override
     public Future<Void> sendEvent(Event event) {
-	/* replace local id with remote id */
+//	/* replace local id with remote id */
 	event.replaceRelay(getLocalNodeId(), remoteClientId);
+//	event.removeLastRelay();
 	return super.sendEvent(event);
     }
 
@@ -87,6 +88,9 @@ public class EventNodeWebsocketClientEndpoint extends WsEndpoint{
             /* replace remote id with local id */
             if(wse.remoteClientId.equals(event.to())){
         	event.to(wse.getLocalNodeId());
+        	/* replace remote id in the relay data as well */
+        	
+        	
         	EventHandle eh = Events.builder().scope("WSCLIENT").category("EVENT").name("map-dest-id").getHandle();
         	if(eh.isAllowed()) {
         	    eh.addParam("old", wse.remoteClientId);

@@ -1,48 +1,42 @@
 package net.segoia.eventbus.demo.status.events;
 
-import net.segoia.event.eventbus.Event;
+import net.segoia.event.eventbus.CustomEvent;
 import net.segoia.event.eventbus.EventType;
 import net.segoia.eventbus.demo.status.StatusAppModel;
+import net.segoia.eventbus.demo.status.events.StatusAppInitEvent.Data;
 
-@EventType(value="STATUS-APP:PEER:INIT")
-public class StatusAppInitEvent extends Event{
-    private StatusAppModel model;
+@EventType(value = "STATUS-APP:PEER:INIT")
+public class StatusAppInitEvent extends CustomEvent<Data> {
+    
 
     public StatusAppInitEvent(StatusAppModel model) {
 	super(StatusAppInitEvent.class);
-	this.model = model;
+	this.data=new Data(model);
     }
 
-    /**
-     * @return the model
-     */
-    public StatusAppModel getModel() {
-        return model;
+    public class Data {
+	private StatusAppModel model;
+	
+	public Data(StatusAppModel model) {
+	    super();
+	    this.model = model;
+	}
+
+	/**
+	 * @return the model
+	 */
+	public StatusAppModel getModel() {
+	    return model;
+	}
+
+	/**
+	 * @param model
+	 *            the model to set
+	 */
+	public void setModel(StatusAppModel model) {
+	    this.model = model;
+	}
     }
 
-    /**
-     * @param model the model to set
-     */
-    public void setModel(StatusAppModel model) {
-        this.model = model;
-    }
-
-    /* (non-Javadoc)
-     * @see java.lang.Object#toString()
-     */
-    @Override
-    public String toString() {
-	StringBuilder builder = new StringBuilder();
-	builder.append("StatusAppInitEvent [");
-	if (super.toString() != null)
-	    builder.append("toString()=").append(super.toString()).append(", ");
-	if (model != null)
-	    builder.append("model=").append(model);
-	builder.append("]");
-	return builder.toString();
-    }
-
-    
-    
-
+   
 }

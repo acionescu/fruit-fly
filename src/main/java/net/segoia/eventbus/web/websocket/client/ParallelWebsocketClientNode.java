@@ -47,7 +47,7 @@ public class ParallelWebsocketClientNode extends EventNode {
 
     @Override
     protected EventTracker handleEvent(Event event) {
-	// TODO Auto-generated method stub
+	
 	return null;
     }
 

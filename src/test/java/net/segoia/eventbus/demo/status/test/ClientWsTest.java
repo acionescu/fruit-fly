@@ -16,7 +16,7 @@ public class ClientWsTest {
 	URI uri = new URI("ws://localhost:8080/ebus/ws/eventbus");
 
 	ParallelWebsocketClientNode wsProxyNode = new ParallelWebsocketClientNode(uri);
-
+	System.out.println("proxy: "+wsProxyNode.getId());
 	for (int i = 0; i < 2; i++) {
 	    StatusAppClientAgent cl = new StatusAppClientAgent();
 	    wsProxyNode.registerPeer(cl, new TrueCondition());

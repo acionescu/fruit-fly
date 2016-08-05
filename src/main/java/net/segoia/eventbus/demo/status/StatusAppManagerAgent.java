@@ -83,7 +83,6 @@ public class StatusAppManagerAgent extends AgentNode {
 		
 		PeersViewUpdateEvent pvue = new PeersViewUpdateEvent(peersCopy);
 		
-		
 //		forwardTo(pvue, rec.getEvent().from());
 		pvue.to(rec.getEvent().from());
 		EBus.postEvent(pvue);
