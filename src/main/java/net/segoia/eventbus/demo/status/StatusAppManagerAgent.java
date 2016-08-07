@@ -103,4 +103,10 @@ public class StatusAppManagerAgent extends AgentNode {
 	return null;
     }
 
+    @Override
+    protected void agentConfig() {
+	// TODO Auto-generated method stub
+	
+    }
+
 }

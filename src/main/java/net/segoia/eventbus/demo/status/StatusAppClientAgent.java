@@ -58,7 +58,7 @@ public class StatusAppClientAgent extends AgentNode {
 	    public void run() {
 		requestNewPeers();
 	    }
-	}, 1, 5000);
+	}, 1, 60000);
 
 	System.out.println("starting..");
     }
@@ -94,6 +94,12 @@ public class StatusAppClientAgent extends AgentNode {
     protected EventTracker handleEvent(Event event) {
 	System.out.println(getId()+ ": handle: "+event);
 	return null;
+    }
+
+    @Override
+    protected void agentConfig() {
+	// TODO Auto-generated method stub
+	
     }
 
 }

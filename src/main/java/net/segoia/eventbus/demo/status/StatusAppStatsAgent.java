@@ -30,4 +30,10 @@ public class StatusAppStatsAgent extends AgentNode{
 	
     }
 
+    @Override
+    protected void agentConfig() {
+	// TODO Auto-generated method stub
+	
+    }
+
 }

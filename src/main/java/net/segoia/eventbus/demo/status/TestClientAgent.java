@@ -32,4 +32,10 @@ public class TestClientAgent extends AgentNode{
 	
     }
 
+    @Override
+    protected void agentConfig() {
+	// TODO Auto-generated method stub
+	
+    }
+
 }

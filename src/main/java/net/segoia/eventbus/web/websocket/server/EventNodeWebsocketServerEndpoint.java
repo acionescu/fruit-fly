@@ -5,24 +5,20 @@ import javax.websocket.OnError;
 import javax.websocket.OnMessage;
 import javax.websocket.OnOpen;
 import javax.websocket.Session;
-import javax.websocket.server.ServerEndpoint;
 
-import net.segoia.event.conditions.TrueCondition;
 import net.segoia.event.eventbus.Event;
 import net.segoia.event.eventbus.constants.EventParams;
 import net.segoia.event.eventbus.constants.Events;
-import net.segoia.event.eventbus.util.EBus;
 import net.segoia.eventbus.web.websocket.WsEndpoint;
 
-@ServerEndpoint(value = "/ws/eventbus")
-public class EventNodeWebsocketServerEndpoint extends WsEndpoint {
+public abstract class EventNodeWebsocketServerEndpoint extends WsEndpoint {
     private WebsocketServerEventNode localNode;
 
     @OnOpen
     public void onOpen(Session session) {
 	this.session = session;
 
-	localNode = new WebsocketServerEventNode(this);
+	localNode = buildLocalNode();
 
 	state = CONNECTED;
 	sendConnectedEvent();
@@ -58,6 +54,8 @@ public class EventNodeWebsocketServerEndpoint extends WsEndpoint {
 	sendEvent(event);
     }
 
+    protected abstract WebsocketServerEventNode buildLocalNode();
+    
     @Override
     public String getLocalNodeId() {
 	return localNode.getId();
@@ -68,11 +66,20 @@ public class EventNodeWebsocketServerEndpoint extends WsEndpoint {
 	state = ACCEPTED;
 	
 	sendAuthenticated();
-	/* now we can register to the main node */
-	EBus.getMainNode().registerPeer(localNode, new TrueCondition());
+	/* now we can init the local node */
+
+	initLocalNode(localNode);
 
 	System.out.println(session.getId());
     }
+    
+    /**
+     * This is called once the client websocket connection is accepted
+     * </br>
+     * Override to initialize the local event node for this connection
+     * @param localNode
+     */
+    protected abstract void initLocalNode(WebsocketServerEventNode localNode);
     
     public void sendAuthenticated() {
 	Event event = Events.builder().ebus().peer().authenticated().build();
