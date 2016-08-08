@@ -9,7 +9,6 @@ import net.segoia.event.eventbus.EventTracker;
 import net.segoia.event.eventbus.peers.AgentNode;
 import net.segoia.event.eventbus.peers.DefaultEventRelay;
 import net.segoia.event.eventbus.peers.EventRelay;
-import net.segoia.event.eventbus.peers.PeerEventContext;
 
 public abstract class WebsocketServerEventNode extends AgentNode{
     
@@ -17,7 +16,7 @@ public abstract class WebsocketServerEventNode extends AgentNode{
     private EventNodeWebsocketServerEndpoint ws;
     
     public WebsocketServerEventNode(EventNodeWebsocketServerEndpoint ws) {
-	/* we dont' want the agent to autoinitialize, we will do it */
+	/* we don't want the agent to autoinitialize, we will do it */
 	super(false);
 	this.ws=ws;
     }
@@ -31,6 +30,7 @@ public abstract class WebsocketServerEventNode extends AgentNode{
     
     @Override
     protected EventTracker handleEvent(Event event) {
+	System.out.println("sending "+event);
 	Future<Void> future = ws.sendEvent(event);
 	return new AsyncEventTracker(future, true);
     }
@@ -48,11 +48,6 @@ public abstract class WebsocketServerEventNode extends AgentNode{
     @Override
     public void cleanUp() {
 	ws.terminate();
-    }
-
-    @Override
-    protected void handleRemoteEvent(PeerEventContext pc) {
-	handleEvent(pc.getEvent());
     }
     
 }

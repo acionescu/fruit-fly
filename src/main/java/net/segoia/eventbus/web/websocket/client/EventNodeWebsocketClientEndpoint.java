@@ -52,8 +52,8 @@ public class EventNodeWebsocketClientEndpoint extends WsEndpoint{
     @Override
     public Future<Void> sendEvent(Event event) {
 //	/* replace local id with remote id */
-	event.replaceRelay(getLocalNodeId(), remoteClientId);
-//	event.removeLastRelay();
+//	event.replaceRelay(getLocalNodeId(), remoteClientId);
+	event.removeLastRelay();
 	return super.sendEvent(event);
     }
 

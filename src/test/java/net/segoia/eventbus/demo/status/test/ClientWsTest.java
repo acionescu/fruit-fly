@@ -21,7 +21,7 @@ public class ClientWsTest {
 	    StatusAppClientAgent cl = new StatusAppClientAgent();
 	    wsProxyNode.registerPeer(cl, new TrueCondition());
 	    
-	    Thread.sleep(10);
+	    Thread.sleep(100);
 	}
 
 	Thread.sleep(20000);

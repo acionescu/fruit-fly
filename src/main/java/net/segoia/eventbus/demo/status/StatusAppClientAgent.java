@@ -8,8 +8,6 @@ import net.segoia.event.eventbus.EventHandle;
 import net.segoia.event.eventbus.EventTracker;
 import net.segoia.event.eventbus.constants.Events;
 import net.segoia.event.eventbus.peers.AgentNode;
-import net.segoia.event.eventbus.peers.RemoteEventContext;
-import net.segoia.event.eventbus.peers.RemoteEventHandler;
 import net.segoia.eventbus.demo.status.events.PeersViewUpdateEvent;
 import net.segoia.eventbus.demo.status.events.RefreshPeersRequestEvent;
 import net.segoia.eventbus.demo.status.events.StatusAppInitEvent;
@@ -28,37 +26,33 @@ public class StatusAppClientAgent extends AgentNode {
 
     @Override
     protected void registerHandlers() {
-	addEventHandler(StatusAppInitEvent.class, new RemoteEventHandler<StatusAppClientAgent>() {
-
-	    @Override
-	    public void handleRemoteEvent(RemoteEventContext<StatusAppClientAgent> rec) {
-		StatusAppInitEvent appInitEvent = (StatusAppInitEvent) rec.getEvent();
-		model = appInitEvent.getData().getModel();
-		start();
-	    }
+	addEventHandler(StatusAppInitEvent.class, (c) -> {
+	    StatusAppInitEvent appInitEvent = c.getEvent();
+	    model = appInitEvent.getData().getModel();
+	    start();
 	});
 
-	addEventHandler(PeersViewUpdateEvent.class, new RemoteEventHandler<StatusAppClientAgent>() {
+	addEventHandler(PeersViewUpdateEvent.class, (c) -> {
+	    PeersViewUpdateEvent event = c.getEvent();
+	    model.setPeersData(event.getData().getPeersData());
+	    System.out.println("refreshed");
 
-	    @Override
-	    public void handleRemoteEvent(RemoteEventContext<StatusAppClientAgent> rec) {
-		PeersViewUpdateEvent event = (PeersViewUpdateEvent)rec.getEvent();
-		model.setPeersData(event.getData().getPeersData());
-		System.out.println("refreshed");
-	    }
 	});
 
     }
 
     protected void start() {
+	
 	timer = new Timer(true);
 	timer.scheduleAtFixedRate(new TimerTask() {
 
 	    @Override
 	    public void run() {
 		requestNewPeers();
+		setStatus(model.getStatus().split("-")[0]+"-just refreshed "+System.currentTimeMillis());
+		
 	    }
-	}, 1, 60000);
+	}, 1, 6000);
 
 	System.out.println("starting..");
     }
@@ -78,8 +72,8 @@ public class StatusAppClientAgent extends AgentNode {
 	if (eh.isAllowed()) {
 	    eh.addParam("status", model.getStatus());
 	    // TODO: maybe we should post this via the main node reference
-//	    forwardToAll(eh.event());
-	    
+	    // forwardToAll(eh.event());
+
 	    forwardToAllKnown(eh.event());
 	}
     }
@@ -92,12 +86,18 @@ public class StatusAppClientAgent extends AgentNode {
 
     @Override
     protected EventTracker handleEvent(Event event) {
-	System.out.println(getId()+ ": handle: "+event);
+	System.out.println(getId() + ": handle: " + event);
 	return null;
     }
 
     @Override
     protected void agentConfig() {
+	// TODO Auto-generated method stub
+
+    }
+
+    @Override
+    protected void onTerminate() {
 	// TODO Auto-generated method stub
 	
     }

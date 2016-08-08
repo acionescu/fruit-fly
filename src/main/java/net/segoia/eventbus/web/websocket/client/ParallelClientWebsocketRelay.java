@@ -58,9 +58,21 @@ public class ParallelClientWebsocketRelay extends EventRelay {
      * @see net.segoia.event.eventbus.peers.EventRelay#onRemoteEvent(net.segoia.event.eventbus.Event)
      */
     @Override
-    protected void onRemoteEvent(Event event) {
-	event.addRelay(getParentNodeId());
+    public void onRemoteEvent(Event event) {
+	/* this is just a proxy, not a real node, so don't add ourselves as a relay node */
+//	event.addRelay(getParentNodeId());
 	ws.sendEvent(event);
     }
+
+    /* (non-Javadoc)
+     * @see net.segoia.event.eventbus.peers.EventRelay#sendEvent(net.segoia.event.eventbus.Event)
+     */
+    @Override
+    protected void sendEvent(Event event) {
+	/* we don't want to add this proxy as a relay */
+	peerRelay.onRemoteEvent(event);
+    }
+    
+    
 
 }

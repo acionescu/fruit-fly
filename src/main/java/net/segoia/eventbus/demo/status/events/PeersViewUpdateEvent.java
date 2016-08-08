@@ -43,6 +43,21 @@ public class PeersViewUpdateEvent extends CustomEvent<Data> {
 	public void setPeersData(Map<String, PeerStatusView> peersData) {
 	    this.peersData = peersData;
 	}
+
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString() {
+	    StringBuilder builder = new StringBuilder();
+	    builder.append("Data [");
+	    if (peersData != null)
+		builder.append("peersData=").append(peersData);
+	    builder.append("]");
+	    return builder.toString();
+	}
+	
+	
     }
 
 

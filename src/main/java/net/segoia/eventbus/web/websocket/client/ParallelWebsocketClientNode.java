@@ -5,7 +5,6 @@ import java.net.URISyntaxException;
 
 import net.segoia.event.conditions.TrueCondition;
 import net.segoia.event.eventbus.Event;
-import net.segoia.event.eventbus.EventContext;
 import net.segoia.event.eventbus.EventTracker;
 import net.segoia.event.eventbus.peers.EventNode;
 import net.segoia.event.eventbus.peers.EventRelay;
@@ -54,6 +53,12 @@ public class ParallelWebsocketClientNode extends EventNode {
     @Override
     protected EventRelay buildLocalRelay(String peerId) {
 	return new ParallelClientWebsocketRelay(peerId, this, uri);
+    }
+
+    @Override
+    protected void onTerminate() {
+	// TODO Auto-generated method stub
+	
     }
 
     
