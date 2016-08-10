@@ -7,7 +7,7 @@ import javax.servlet.annotation.WebListener;
 import net.segoia.event.eventbus.EventsRepository;
 import net.segoia.event.eventbus.util.EBus;
 
-@WebListener
+//@WebListener
 public class StatusApp implements ServletContextListener {
     /* how many peers can a user follow */
     public static int maxPartnersPerUser = 5;
@@ -19,6 +19,7 @@ public class StatusApp implements ServletContextListener {
 
     @Override
     public void contextInitialized(ServletContextEvent sce) {
+	
 	/* start app init agent */
 	new StatusAppManagerAgent();
 
@@ -27,15 +28,16 @@ public class StatusApp implements ServletContextListener {
 	for (int i = 0; i < maxQuoteAgents; i++) {
 	    QuoteAsStatusAgent ag = new QuoteAsStatusAgent();
 	}
-	
-	EventsRepository.load();
-
+	System.out.println("Loading events");
+//	EventsRepository.load();
+	System.out.println("Initialized");
     }
 
     @Override
     public void contextDestroyed(ServletContextEvent sce) {
-	EBus.getMainNode().terminate();
 	System.out.println("Terminating main node.");
+	EBus.getMainNode().terminate();
+	System.out.println("Main node terminated.");
 
     }
 

@@ -22,15 +22,26 @@ public abstract class WebsocketServerEventNode extends AgentNode{
     }
     
     @Override
-    protected void agentConfig() {
+    protected void nodeConfig() {
 	config.setAutoRelayEnabled(true);
 	config.setDefaultRequestedEvents(new TrueCondition());
 	
     }
     
+    
+    
+    
+    /* (non-Javadoc)
+     * @see net.segoia.event.eventbus.peers.EventNode#registerHandlers()
+     */
     @Override
+    protected void registerHandlers() {
+	super.registerHandlers();
+	/* register a generic handler that will send all received events to the websocket endpoint */
+	addEventHandler((c) -> this.handleEvent(c.getEvent()));
+    }
+
     protected EventTracker handleEvent(Event event) {
-	System.out.println("sending "+event);
 	Future<Void> future = ws.sendEvent(event);
 	return new AsyncEventTracker(future, true);
     }

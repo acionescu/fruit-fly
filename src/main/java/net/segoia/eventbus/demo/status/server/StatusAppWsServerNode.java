@@ -6,7 +6,6 @@ import net.segoia.event.conditions.LooseEventMatchCondition;
 import net.segoia.event.conditions.NotCondition;
 import net.segoia.event.conditions.OrCondition;
 import net.segoia.event.conditions.StrictEventMatchCondition;
-import net.segoia.event.conditions.TrueCondition;
 import net.segoia.event.eventbus.Event;
 import net.segoia.event.eventbus.EventContext;
 import net.segoia.event.eventbus.EventTracker;
@@ -20,9 +19,9 @@ import net.segoia.eventbus.web.websocket.server.EventNodeWebsocketServerEndpoint
 import net.segoia.eventbus.web.websocket.server.WebsocketServerEventNode;
 
 public class StatusAppWsServerNode extends WebsocketServerEventNode {
-    private static Condition defaultEventsCond = new AndCondition(
-	    new OrCondition(LooseEventMatchCondition.build("PEER", "STATUS"),
-		    LooseEventMatchCondition.build("STATUS-APP", null)),
+    private static Condition acceptedClientEvents = new OrCondition(LooseEventMatchCondition.build("PEER", null),
+	    LooseEventMatchCondition.build("STATUS-APP", null));
+    private static Condition acceptedServerEvents = new AndCondition(acceptedClientEvents,
 	    new NotCondition(LooseEventMatchCondition.build("STATUS-APP", "REQUEST")));
 
     /**
@@ -34,7 +33,8 @@ public class StatusAppWsServerNode extends WebsocketServerEventNode {
      * Only events satisfying this condition will be passed to the ws client
      */
     private static Condition passToWsClientCond = new NotCondition(
-	    LooseEventMatchCondition.buildWithCategory("REQUEST"));
+	    new OrCondition(LooseEventMatchCondition.buildWithCategory("REQUEST"),
+		    LooseEventMatchCondition.buildWithCategory("RESPONSE")));
 
     private StatusAppModel model;
 
@@ -44,6 +44,8 @@ public class StatusAppWsServerNode extends WebsocketServerEventNode {
 
     @Override
     protected void registerHandlers() {
+	super.registerHandlers();
+
 	addEventHandler(StatusAppInitEvent.class, (c) -> this.handleAppInit(c.getEvent()));
 
 	addEventHandler(PeersViewUpdateEvent.class, (c) -> this.handlePeersRefresh(c.getEvent()));
@@ -68,12 +70,15 @@ public class StatusAppWsServerNode extends WebsocketServerEventNode {
     private void registerToPeers() {
 	model.getPeersData().forEach((peerId, peerView) -> {
 	    PeerRegisterRequestEvent regEvent = new PeerRegisterRequestEvent(getId(), peerRegisterCond);
-	    System.out.println(getId()+ " registering to peer "+peerId);
+	    System.out.println(getId() + " registering to peer " + peerId);
 	    forwardTo(regEvent, peerId);
 	});
     }
 
     private void unregisterFromPeers() {
+	if (model == null) {
+	    return;
+	}
 	model.getPeersData().forEach((peerId, peerView) -> {
 	    PeerRequestUnregisterEvent ue = new PeerRequestUnregisterEvent(getId());
 	    forwardTo(ue, peerId);
@@ -81,12 +86,11 @@ public class StatusAppWsServerNode extends WebsocketServerEventNode {
     }
 
     @Override
-    protected void agentInit() {
+    protected void nodeInit() {
 	/* register for all events that are not requests */
-	EBus.getMainNode().registerPeer(this, new TrueCondition());
+	EBus.getMainNode().registerPeer(this, acceptedServerEvents);
 
     }
-
 
     protected void onTerminate() {
 	/* unregister from peers before we go */
@@ -101,28 +105,31 @@ public class StatusAppWsServerNode extends WebsocketServerEventNode {
      */
     @Override
     protected EventTracker handleEvent(Event event) {
+	System.out.println(getId() + " handle " + event);
 	if (passToWsClientCond.test(new EventContext(event, null))) {
 	    return super.handleEvent(event);
 	}
 	return null;
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see net.segoia.eventbus.web.websocket.server.WebsocketServerEventNode#onWsEvent(net.segoia.event.eventbus.Event)
      */
     @Override
     public void onWsEvent(Event event) {
-	switch(event.getEt()) {
+	switch (event.getEt()) {
 	/* we want to rewrite this */
-	case "PEER:STATUS:UPDATED" :
+	case "PEER:STATUS:UPDATED":
 	    event.getForwardTo().clear();
 	    forwardToAllKnown(event);
 	    return;
-	    
 	}
-	super.onWsEvent(event);
+	if (acceptedClientEvents.test(new EventContext(event, null))) {
+	    System.out.println(getId() +" sending "+event);
+	    super.onWsEvent(event);
+	}
     }
-    
-    
 
 }

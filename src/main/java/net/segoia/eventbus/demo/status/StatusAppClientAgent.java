@@ -5,7 +5,6 @@ import java.util.TimerTask;
 
 import net.segoia.event.eventbus.Event;
 import net.segoia.event.eventbus.EventHandle;
-import net.segoia.event.eventbus.EventTracker;
 import net.segoia.event.eventbus.constants.Events;
 import net.segoia.event.eventbus.peers.AgentNode;
 import net.segoia.eventbus.demo.status.events.PeersViewUpdateEvent;
@@ -19,13 +18,14 @@ public class StatusAppClientAgent extends AgentNode {
     private Timer timer;
 
     @Override
-    protected void agentInit() {
+    protected void nodeInit() {
 	// TODO Auto-generated method stub
 
     }
 
     @Override
     protected void registerHandlers() {
+	super.registerHandlers();
 	addEventHandler(StatusAppInitEvent.class, (c) -> {
 	    StatusAppInitEvent appInitEvent = c.getEvent();
 	    model = appInitEvent.getData().getModel();
@@ -38,11 +38,16 @@ public class StatusAppClientAgent extends AgentNode {
 	    System.out.println("refreshed");
 
 	});
+	
+	addEventHandler("PEER:STATUS:UPDATED", (c) -> {
+	    Event event = c.getEvent();
+	    System.out.println(getId()+" -> "+event.from()+" : "+event.getParam("status"));
+	});
 
     }
 
     protected void start() {
-	
+	System.out.println(getId()+" starting..");
 	timer = new Timer(true);
 	timer.scheduleAtFixedRate(new TimerTask() {
 
@@ -54,7 +59,7 @@ public class StatusAppClientAgent extends AgentNode {
 	    }
 	}, 1, 6000);
 
-	System.out.println("starting..");
+	System.out.println(getId()+" started");
     }
 
     protected void requestNewPeers() {
@@ -85,13 +90,7 @@ public class StatusAppClientAgent extends AgentNode {
     }
 
     @Override
-    protected EventTracker handleEvent(Event event) {
-	System.out.println(getId() + ": handle: " + event);
-	return null;
-    }
-
-    @Override
-    protected void agentConfig() {
+    protected void nodeConfig() {
 	// TODO Auto-generated method stub
 
     }

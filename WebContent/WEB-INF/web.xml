@@ -16,5 +16,9 @@
    <listener>
       <listener-class>net.segoia.eventbus.web.websocket.WsRequestListener</listener-class>
    </listener>
+   
+   <listener>
+      <listener-class>net.segoia.eventbus.demo.status.StatusApp</listener-class>
+   </listener>
   
 </web-app>

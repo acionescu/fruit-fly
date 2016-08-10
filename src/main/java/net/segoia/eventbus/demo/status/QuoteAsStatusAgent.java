@@ -21,8 +21,8 @@ public class QuoteAsStatusAgent extends StatusAppClientAgent {
     private Timer timer;
 
     @Override
-    protected void agentInit() {
-	super.agentInit();
+    protected void nodeInit() {
+	super.nodeInit();
 	
 	/* update status every 2 minutes */
 	statusUpdatePeriod = 10000;//1000 * 60 * 2;
@@ -50,12 +50,6 @@ public class QuoteAsStatusAgent extends StatusAppClientAgent {
     public void cleanUp() {
 	timer.cancel();
 	System.out.println("Canceling timer");
-    }
-
-    @Override
-    protected EventTracker handleEvent(Event event) {
-	
-	return null;
     }
     
 }

@@ -4,7 +4,6 @@ import java.util.Map;
 
 import net.segoia.event.conditions.TrueCondition;
 import net.segoia.event.eventbus.Event;
-import net.segoia.event.eventbus.EventTracker;
 import net.segoia.event.eventbus.constants.EventParams;
 import net.segoia.event.eventbus.peers.AgentNode;
 import net.segoia.event.eventbus.util.EBus;
@@ -18,7 +17,7 @@ public class StatusAppManagerAgent extends AgentNode {
     private LRUCache<String, PeerStatusView> recentPeers;
 
     @Override
-    protected void agentInit() {
+    protected void nodeInit() {
 	recentPeers = new LRUCache<>(StatusApp.maxPartnersPerUser);
 
 	mainNode = EBus.getMainNode();
@@ -27,13 +26,12 @@ public class StatusAppManagerAgent extends AgentNode {
 
     @Override
     protected void registerHandlers() {
-
+	super.registerHandlers();
 	/* cache the last N updates */
 	addEventHandler("PEER:STATUS:UPDATED", (c) -> {
 	    Event event = c.getEvent();
 	    String peerId = event.from();
-	    recentPeers.put(peerId, new PeerStatusView(peerId, (String) event.getParam(StatusApp.STATUS)));
-
+	    updateRecentPeers(peerId, new PeerStatusView(peerId, (String) event.getParam(StatusApp.STATUS)));
 	});
 
 	/* send init info to new peers */
@@ -41,7 +39,7 @@ public class StatusAppManagerAgent extends AgentNode {
 	addEventHandler("EBUS:PEER:NEW", (c) -> {
 	    Event event = c.getEvent();
 	    String peerId = (String) event.getParam(EventParams.peerId);
-
+	    System.out.println("processing new peer event "+event.getId() +" from "+event.from() + " via "+event.getLastRelay());
 	    Map<String, PeerStatusView> peersCopy = recenPeersSnapshot();
 	    StatusAppModel model = new StatusAppModel(peerId, "Hi, I'm visitor " + StatusApp.stats.newPeer(),
 		    peersCopy);
@@ -50,8 +48,16 @@ public class StatusAppManagerAgent extends AgentNode {
 	    forwardTo(appInitEvent, peerId);
 
 	    /* update peers */
-	    recentPeers.put(peerId, new PeerStatusView(peerId, model.getStatus()));
+	    updateRecentPeers(peerId, new PeerStatusView(peerId, model.getStatus()));
 
+	});
+
+	addEventHandler("EBUS:PEER:REMOVED", (c) -> {
+	    Event event = c.getEvent();
+	    String peerId = (String) event.getParam(EventParams.peerId);
+
+	    recentPeers.remove(peerId);
+	    System.out.println("Removed peer "+peerId);
 	});
 
 	RefreshPeersRequestEvent.class.getName();
@@ -67,9 +73,8 @@ public class StatusAppManagerAgent extends AgentNode {
     }
 
     private void updateRecentPeers(String peerId, PeerStatusView status) {
-	synchronized (recentPeers) {
-	    recentPeers.put(peerId, status);
-	}
+	recentPeers.put(peerId, status);
+	System.out.println("Recent Peers: "+recentPeers.keySet());
     }
 
     private Map<String, PeerStatusView> recenPeersSnapshot() {
@@ -87,13 +92,7 @@ public class StatusAppManagerAgent extends AgentNode {
     }
 
     @Override
-    protected EventTracker handleEvent(Event event) {
-	// TODO Auto-generated method stub
-	return null;
-    }
-
-    @Override
-    protected void agentConfig() {
+    protected void nodeConfig() {
 	// TODO Auto-generated method stub
 
     }
@@ -101,7 +100,7 @@ public class StatusAppManagerAgent extends AgentNode {
     @Override
     protected void onTerminate() {
 	// TODO Auto-generated method stub
-	
+
     }
 
 }

@@ -4,9 +4,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 
 import net.segoia.event.conditions.TrueCondition;
-import net.segoia.event.eventbus.Event;
-import net.segoia.event.eventbus.EventTracker;
-import net.segoia.event.eventbus.peers.EventNode;
+import net.segoia.event.eventbus.peers.AgentNode;
 import net.segoia.event.eventbus.peers.EventRelay;
 
 /**
@@ -14,13 +12,12 @@ import net.segoia.event.eventbus.peers.EventRelay;
  * @author adi
  *
  */
-public class ParallelWebsocketClientNode extends EventNode {
+public class ParallelWebsocketClientNode extends AgentNode {
     private URI uri;
 
     public ParallelWebsocketClientNode(URI uri) {
 	super();
 	this.uri = uri;
-	init();
     }
 
     public ParallelWebsocketClientNode(String uri) throws URISyntaxException {
@@ -32,7 +29,7 @@ public class ParallelWebsocketClientNode extends EventNode {
     }
 
     @Override
-    protected void init() {
+    protected void nodeConfig() {
 	/* make sure we set autorelay enabled, otherwise all events coming from the websocket will be blocked by default */
 	config.setAutoRelayEnabled(true);
 	/* let the client send anything */
@@ -44,11 +41,6 @@ public class ParallelWebsocketClientNode extends EventNode {
 	
     }
 
-    @Override
-    protected EventTracker handleEvent(Event event) {
-	
-	return null;
-    }
 
     @Override
     protected EventRelay buildLocalRelay(String peerId) {
