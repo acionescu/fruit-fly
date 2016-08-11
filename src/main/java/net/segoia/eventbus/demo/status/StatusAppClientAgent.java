@@ -10,17 +10,18 @@ import net.segoia.event.eventbus.peers.AgentNode;
 import net.segoia.eventbus.demo.status.events.PeersViewUpdateEvent;
 import net.segoia.eventbus.demo.status.events.RefreshPeersRequestEvent;
 import net.segoia.eventbus.demo.status.events.StatusAppInitEvent;
+import net.segoia.eventbus.demo.status.events.TickEvent;
 
 public class StatusAppClientAgent extends AgentNode {
 
     protected StatusAppModel model;
-
     private Timer timer;
+    protected long stateRefreshPeriod;
+    
 
     @Override
     protected void nodeInit() {
-	// TODO Auto-generated method stub
-
+	stateRefreshPeriod = 6000;
     }
 
     @Override
@@ -35,13 +36,16 @@ public class StatusAppClientAgent extends AgentNode {
 	addEventHandler(PeersViewUpdateEvent.class, (c) -> {
 	    PeersViewUpdateEvent event = c.getEvent();
 	    model.setPeersData(event.getData().getPeersData());
-	    System.out.println("refreshed");
 
 	});
 	
 	addEventHandler("PEER:STATUS:UPDATED", (c) -> {
 	    Event event = c.getEvent();
-	    System.out.println(getId()+" -> "+event.from()+" : "+event.getParam("status"));
+	    System.out.println(getId()+" <- "+event.from()+" : "+event.getParam("status"));
+	});
+	
+	addEventHandler(TickEvent.class, (c) -> {
+	    	updateState();
 	});
 
     }
@@ -53,13 +57,17 @@ public class StatusAppClientAgent extends AgentNode {
 
 	    @Override
 	    public void run() {
-		requestNewPeers();
-		setStatus(model.getStatus().split("-")[0]+"-just refreshed "+System.currentTimeMillis());
+		postInternally(new TickEvent("StatusApp-Agent"));
 		
 	    }
-	}, 1, 6000);
+	}, 1, stateRefreshPeriod);
 
 	System.out.println(getId()+" started");
+    }
+    
+    protected void updateState() {
+	requestNewPeers();
+	setStatus(model.getStatus().split("-")[0]+"-just refreshed "+System.currentTimeMillis());
     }
 
     protected void requestNewPeers() {
@@ -85,8 +93,8 @@ public class StatusAppClientAgent extends AgentNode {
 
     @Override
     public void cleanUp() {
-	// TODO Auto-generated method stub
-
+	timer.cancel();
+	System.out.println("Canceling timer");
     }
 
     @Override

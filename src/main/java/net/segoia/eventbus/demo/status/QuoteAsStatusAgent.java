@@ -4,9 +4,8 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import net.segoia.event.conditions.TrueCondition;
-import net.segoia.event.eventbus.Event;
-import net.segoia.event.eventbus.EventTracker;
 import net.segoia.event.eventbus.util.EBus;
+import net.segoia.eventbus.demo.status.events.TickEvent;
 
 /**
  * This is a simple agent that will emulate an user by setting as status a random quote.
@@ -16,40 +15,39 @@ import net.segoia.event.eventbus.util.EBus;
  */
 public class QuoteAsStatusAgent extends StatusAppClientAgent {
 
-    private long statusUpdatePeriod;
-
-    private Timer timer;
-
     @Override
     protected void nodeInit() {
 	super.nodeInit();
-	
+
 	/* update status every 2 minutes */
-	statusUpdatePeriod = 10000;//1000 * 60 * 2;
-	
+	stateRefreshPeriod = 10000;// 1000 * 60 * 2;
+
 	mainNode = EBus.getMainNode();
-	mainNode.registerPeer(this,new TrueCondition());
+	mainNode.registerPeer(this, new TrueCondition());
     }
 
-    protected void start() {
-	timer = new Timer(true);
-	timer.scheduleAtFixedRate(new TimerTask() {
-
-	    @Override
-	    public void run() {
-		updateStatus();
-	    }
-	}, 1, statusUpdatePeriod);
+    /*
+     * (non-Javadoc)
+     * 
+     * @see net.segoia.eventbus.demo.status.StatusAppClientAgent#registerHandlers()
+     */
+    @Override
+    protected void registerHandlers() {
+	super.registerHandlers();
     }
 
     private void updateStatus() {
 	setStatus(QuotesChest.getRandomQuote());
     }
 
+    /*
+     * (non-Javadoc)
+     * 
+     * @see net.segoia.eventbus.demo.status.StatusAppClientAgent#updateState()
+     */
     @Override
-    public void cleanUp() {
-	timer.cancel();
-	System.out.println("Canceling timer");
+    protected void updateState() {
+	updateStatus();
     }
-    
+
 }

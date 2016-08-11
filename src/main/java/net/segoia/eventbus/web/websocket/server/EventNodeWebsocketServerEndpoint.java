@@ -43,6 +43,7 @@ public abstract class EventNodeWebsocketServerEndpoint extends WsEndpoint {
 
     @OnError
     public void onError(Throwable t) {
+	System.err.println("Terminating node "+getLocalNodeId() + " due to error ");
 	t.printStackTrace();
 	localNode.terminate();
     }

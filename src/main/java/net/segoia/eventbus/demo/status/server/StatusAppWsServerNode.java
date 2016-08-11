@@ -12,6 +12,7 @@ import net.segoia.event.eventbus.EventTracker;
 import net.segoia.event.eventbus.peers.events.PeerRegisterRequestEvent;
 import net.segoia.event.eventbus.peers.events.PeerRequestUnregisterEvent;
 import net.segoia.event.eventbus.util.EBus;
+import net.segoia.eventbus.demo.status.PeerStatusView;
 import net.segoia.eventbus.demo.status.StatusAppModel;
 import net.segoia.eventbus.demo.status.events.PeersViewUpdateEvent;
 import net.segoia.eventbus.demo.status.events.StatusAppInitEvent;
@@ -34,7 +35,7 @@ public class StatusAppWsServerNode extends WebsocketServerEventNode {
      */
     private static Condition passToWsClientCond = new NotCondition(
 	    new OrCondition(LooseEventMatchCondition.buildWithCategory("REQUEST"),
-		    LooseEventMatchCondition.buildWithCategory("RESPONSE")));
+		    LooseEventMatchCondition.buildWithCategory("RESPONSE"), peerRegisterCond));
 
     private StatusAppModel model;
 
@@ -49,6 +50,20 @@ public class StatusAppWsServerNode extends WebsocketServerEventNode {
 	addEventHandler(StatusAppInitEvent.class, (c) -> this.handleAppInit(c.getEvent()));
 
 	addEventHandler(PeersViewUpdateEvent.class, (c) -> this.handlePeersRefresh(c.getEvent()));
+
+	addEventHandler("PEER:STATUS:UPDATED", (c) -> {
+	    if (model == null) {
+		return;
+	    }
+	    Event event = c.getEvent();
+	    PeerStatusView psv = model.getPeersData().get(event.from());
+
+	    /* only treat update messages that come from peers we are registered to */
+	    if (psv != null) {
+		psv.setStatus((String) event.getParam("status"));
+		super.handleEvent(event);
+	    }
+	});
     }
 
     private void handleAppInit(StatusAppInitEvent event) {
@@ -70,7 +85,6 @@ public class StatusAppWsServerNode extends WebsocketServerEventNode {
     private void registerToPeers() {
 	model.getPeersData().forEach((peerId, peerView) -> {
 	    PeerRegisterRequestEvent regEvent = new PeerRegisterRequestEvent(getId(), peerRegisterCond);
-	    System.out.println(getId() + " registering to peer " + peerId);
 	    forwardTo(regEvent, peerId);
 	});
     }
@@ -105,7 +119,6 @@ public class StatusAppWsServerNode extends WebsocketServerEventNode {
      */
     @Override
     protected EventTracker handleEvent(Event event) {
-	System.out.println(getId() + " handle " + event);
 	if (passToWsClientCond.test(new EventContext(event, null))) {
 	    return super.handleEvent(event);
 	}
@@ -127,7 +140,6 @@ public class StatusAppWsServerNode extends WebsocketServerEventNode {
 	    return;
 	}
 	if (acceptedClientEvents.test(new EventContext(event, null))) {
-	    System.out.println(getId() +" sending "+event);
 	    super.onWsEvent(event);
 	}
     }
