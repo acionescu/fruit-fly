@@ -1,11 +1,7 @@
 package net.segoia.eventbus.demo.status;
 
-import java.util.Timer;
-import java.util.TimerTask;
-
 import net.segoia.event.conditions.TrueCondition;
 import net.segoia.event.eventbus.util.EBus;
-import net.segoia.eventbus.demo.status.events.TickEvent;
 
 /**
  * This is a simple agent that will emulate an user by setting as status a random quote.
@@ -20,7 +16,7 @@ public class QuoteAsStatusAgent extends StatusAppClientAgent {
 	super.nodeInit();
 
 	/* update status every 2 minutes */
-	stateRefreshPeriod = 10000;// 1000 * 60 * 2;
+	stateRefreshPeriod = 30000;//1000 * 60 * 2;
 
 	mainNode = EBus.getMainNode();
 	mainNode.registerPeer(this, new TrueCondition());

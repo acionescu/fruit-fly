@@ -68,6 +68,7 @@ public class StatusAppWsServerNode extends WebsocketServerEventNode {
 
     private void handleAppInit(StatusAppInitEvent event) {
 	model = event.getData().getModel();
+	System.out.println(getId() + " we have " + model.getPeersData().size() + " peers");
 	/* register for status update to the peers */
 	registerToPeers();
     }
@@ -132,14 +133,17 @@ public class StatusAppWsServerNode extends WebsocketServerEventNode {
      */
     @Override
     public void onWsEvent(Event event) {
+	EventContext ec = new EventContext(event, null);
 	switch (event.getEt()) {
 	/* we want to rewrite this */
 	case "PEER:STATUS:UPDATED":
 	    event.getForwardTo().clear();
+//	    event.setForwardTo(getKnownPeers(ec));
 	    forwardToAllKnown(event);
 	    return;
 	}
-	if (acceptedClientEvents.test(new EventContext(event, null))) {
+
+	if (acceptedClientEvents.test(ec)) {
 	    super.onWsEvent(event);
 	}
     }

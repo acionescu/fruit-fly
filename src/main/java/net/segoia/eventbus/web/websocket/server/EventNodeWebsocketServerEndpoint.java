@@ -34,7 +34,7 @@ public abstract class EventNodeWebsocketServerEndpoint extends WsEndpoint {
     public void onMessage(String message) {
 	try {
 	    Event event = Event.fromJson(message);
-	    
+	    System.out.println(event);
 	    state.handleEvent(event, this);
 	} catch (Exception e) {
 	    e.printStackTrace();
