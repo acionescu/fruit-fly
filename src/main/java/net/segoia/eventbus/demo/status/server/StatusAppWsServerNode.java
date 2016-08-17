@@ -9,6 +9,7 @@ import net.segoia.event.conditions.StrictEventMatchCondition;
 import net.segoia.event.eventbus.Event;
 import net.segoia.event.eventbus.EventContext;
 import net.segoia.event.eventbus.EventTracker;
+import net.segoia.event.eventbus.constants.EventParams;
 import net.segoia.event.eventbus.peers.events.PeerRegisterRequestEvent;
 import net.segoia.event.eventbus.peers.events.PeerRequestUnregisterEvent;
 import net.segoia.event.eventbus.util.EBus;
@@ -22,7 +23,8 @@ import net.segoia.eventbus.web.websocket.server.WebsocketServerEventNode;
 public class StatusAppWsServerNode extends WebsocketServerEventNode {
     private static Condition acceptedClientEvents = new OrCondition(LooseEventMatchCondition.build("PEER", null),
 	    LooseEventMatchCondition.build("STATUS-APP", null));
-    private static Condition acceptedServerEvents = new AndCondition(acceptedClientEvents,
+    private static Condition acceptedServerEvents = new AndCondition(
+	    new OrCondition(acceptedClientEvents, LooseEventMatchCondition.build("EBUS", null)),
 	    new NotCondition(LooseEventMatchCondition.build("STATUS-APP", "REQUEST")));
 
     /**
@@ -61,8 +63,18 @@ public class StatusAppWsServerNode extends WebsocketServerEventNode {
 	    /* only treat update messages that come from peers we are registered to */
 	    if (psv != null) {
 		psv.setStatus((String) event.getParam("status"));
-		super.handleEvent(event);
+		super.handleServerEvent(event);
 	    }
+	});
+
+	/* if one of the peers we are registered to leaves, notify the client */
+	addEventHandler("EBUS:PEER:REMOVED", (c) -> {
+	    Event event = c.event();
+	    String peerId = (String) event.getParam(EventParams.peerId);
+	    if (model.getPeersData().containsKey(peerId)) {
+		super.handleServerEvent(event);
+	    }
+
 	});
     }
 
@@ -102,6 +114,7 @@ public class StatusAppWsServerNode extends WebsocketServerEventNode {
 
     @Override
     protected void nodeInit() {
+	super.nodeInit();
 	/* register for all events that are not requests */
 	EBus.getMainNode().registerPeer(this, acceptedServerEvents);
 
@@ -119,32 +132,34 @@ public class StatusAppWsServerNode extends WebsocketServerEventNode {
      * net.segoia.eventbus.web.websocket.server.WebsocketServerEventNode#handleEvent(net.segoia.event.eventbus.Event)
      */
     @Override
-    protected EventTracker handleEvent(Event event) {
+    protected EventTracker handleServerEvent(Event event) {
 	if (passToWsClientCond.test(new EventContext(event, null))) {
-	    return super.handleEvent(event);
+	    return super.handleServerEvent(event);
 	}
 	return null;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see net.segoia.eventbus.web.websocket.server.WebsocketServerEventNode#onWsEvent(net.segoia.event.eventbus.Event)
-     */
     @Override
-    public void onWsEvent(Event event) {
+    public void handleWsEvent(Event event) {
 	EventContext ec = new EventContext(event, null);
+	/* make sure the client can't inject relays */
+	event.clearRelays();
+	
 	switch (event.getEt()) {
 	/* we want to rewrite this */
 	case "PEER:STATUS:UPDATED":
 	    event.getForwardTo().clear();
-//	    event.setForwardTo(getKnownPeers(ec));
+	    // event.setForwardTo(getKnownPeers(ec));
 	    forwardToAllKnown(event);
 	    return;
-	}
 
+	}
+	
 	if (acceptedClientEvents.test(ec)) {
-	    super.onWsEvent(event);
+	    super.handleWsEvent(event);
+	}
+	else {
+	    System.out.println(getId()+" discarding "+event);
 	}
     }
 

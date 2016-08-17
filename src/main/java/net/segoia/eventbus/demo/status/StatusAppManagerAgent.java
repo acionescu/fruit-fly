@@ -1,14 +1,20 @@
 package net.segoia.eventbus.demo.status;
 
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import net.segoia.event.conditions.TrueCondition;
 import net.segoia.event.eventbus.Event;
 import net.segoia.event.eventbus.constants.EventParams;
 import net.segoia.event.eventbus.peers.AgentNode;
 import net.segoia.event.eventbus.util.EBus;
+import net.segoia.eventbus.demo.status.events.PeerReplaceAccepted;
+import net.segoia.eventbus.demo.status.events.PeerReplaceData;
+import net.segoia.eventbus.demo.status.events.PeerReplaceDenied;
 import net.segoia.eventbus.demo.status.events.PeersViewUpdateEvent;
 import net.segoia.eventbus.demo.status.events.RefreshPeersRequestEvent;
+import net.segoia.eventbus.demo.status.events.ReplacePeerRequestEvent;
 import net.segoia.eventbus.demo.status.events.StatusAppInitEvent;
 import net.segoia.util.data.LRUCache;
 
@@ -16,9 +22,12 @@ public class StatusAppManagerAgent extends AgentNode {
 
     private LRUCache<String, PeerStatusView> recentPeers;
 
+    private Set<String> allPeersIds;
+    
     @Override
     protected void nodeInit() {
 	recentPeers = new LRUCache<>(StatusApp.maxPartnersPerUser);
+	allPeersIds=new HashSet<>();
 
 	mainNode = EBus.getMainNode();
 	mainNode.registerPeerAsAgent(this, new TrueCondition());
@@ -49,6 +58,9 @@ public class StatusAppManagerAgent extends AgentNode {
 	    System.out.println("send init with "+peersCopy.size()+" peers");
 	    /* update peers */
 	    updateRecentPeers(peerId, new PeerStatusView(peerId, model.getStatus()));
+	    
+	    /* keep this node's id */
+	    allPeersIds.add(peerId);
 
 	});
 
@@ -57,10 +69,10 @@ public class StatusAppManagerAgent extends AgentNode {
 	    String peerId = (String) event.getParam(EventParams.peerId);
 
 	    recentPeers.remove(peerId);
+	    allPeersIds.remove(peerId);
 	    System.out.println("Removed peer "+peerId);
 	});
 
-	RefreshPeersRequestEvent.class.getName();
 	addEventHandler(RefreshPeersRequestEvent.class, (c) -> {
 	    Map<String, PeerStatusView> peersCopy = recentPeersSnapshot();
 
@@ -68,6 +80,23 @@ public class StatusAppManagerAgent extends AgentNode {
 
 	    forwardTo(pvue, c.getEvent().from());
 
+	});
+	
+	addEventHandler(ReplacePeerRequestEvent.class, (c)->{
+	    ReplacePeerRequestEvent event = c.event();
+	    PeerReplaceData data = event.getData();
+	    String newPeerId = data.getNewPeerId();
+	    
+	    /* check if the required peer is actually present */
+	    if(allPeersIds.contains(newPeerId)) {
+		
+		forwardTo(new PeerReplaceAccepted(data), event.from());
+	    }
+	    else {
+		System.out.println("sending deny to "+event.from());
+		/* deny replace if the requested peer is not present */
+		forwardTo(new PeerReplaceDenied(data, "Unknown peer id"), event.from());
+	    }
 	});
 
     }

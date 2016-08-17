@@ -5,7 +5,10 @@ import java.util.concurrent.Future;
 import net.segoia.event.conditions.TrueCondition;
 import net.segoia.event.eventbus.AsyncEventTracker;
 import net.segoia.event.eventbus.Event;
+import net.segoia.event.eventbus.EventContext;
 import net.segoia.event.eventbus.EventTracker;
+import net.segoia.event.eventbus.FilteringEventBus;
+import net.segoia.event.eventbus.SimpleEventDispatcher;
 import net.segoia.event.eventbus.peers.AgentNode;
 import net.segoia.event.eventbus.peers.DefaultEventRelay;
 import net.segoia.event.eventbus.peers.EventRelay;
@@ -14,6 +17,11 @@ public abstract class WebsocketServerEventNode extends AgentNode{
     
     
     private EventNodeWebsocketServerEndpoint ws;
+    
+    /**
+     * Keep a separate bus to handle events coming from the ws client
+     */
+    private FilteringEventBus wsEventsBus;
     
     public WebsocketServerEventNode(EventNodeWebsocketServerEndpoint ws) {
 	/* we don't want the agent to autoinitialize, we will do it */
@@ -28,9 +36,17 @@ public abstract class WebsocketServerEventNode extends AgentNode{
 	
     }
     
-    
-    
-    
+    /* (non-Javadoc)
+     * @see net.segoia.event.eventbus.peers.AgentNode#nodeInit()
+     */
+    @Override
+    protected void nodeInit() {
+	super.nodeInit();
+	
+	wsEventsBus = spawnAdditionalBus(new WebsocketServerNodeDispatcher());
+	wsEventsBus.start();
+    }
+
     /* (non-Javadoc)
      * @see net.segoia.event.eventbus.peers.EventNode#registerHandlers()
      */
@@ -38,10 +54,15 @@ public abstract class WebsocketServerEventNode extends AgentNode{
     protected void registerHandlers() {
 	super.registerHandlers();
 	/* register a generic handler that will send all received events to the websocket endpoint */
-	addEventHandler((c) -> this.handleEvent(c.getEvent()));
+	addEventHandler((c) -> this.handleServerEvent(c.getEvent()));
     }
 
-    protected EventTracker handleEvent(Event event) {
+    /**
+     * Called on events coming from the server
+     * @param event
+     * @return
+     */
+    protected EventTracker handleServerEvent(Event event) {
 	Future<Void> future = ws.sendEvent(event);
 	return new AsyncEventTracker(future, true);
     }
@@ -53,6 +74,14 @@ public abstract class WebsocketServerEventNode extends AgentNode{
 
     
     public void onWsEvent(Event event) {
+	wsEventsBus.postEvent(event);
+    }
+    
+    /**
+     * Called on events coming from the ws client
+     * @param event
+     */
+    protected void handleWsEvent(Event event) {
 	forwardToAll(event);
     }
 
@@ -61,4 +90,17 @@ public abstract class WebsocketServerEventNode extends AgentNode{
 	ws.terminate();
     }
     
+    class WebsocketServerNodeDispatcher extends SimpleEventDispatcher{
+
+	/* (non-Javadoc)
+	 * @see net.segoia.event.eventbus.SimpleEventDispatcher#dispatchEvent(net.segoia.event.eventbus.EventContext)
+	 */
+	@Override
+	public boolean dispatchEvent(EventContext ec) {
+	    handleWsEvent(ec.getEvent());
+	    return true;
+	}
+
+	
+    }
 }

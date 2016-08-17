@@ -50,7 +50,7 @@
 	float: left;
 	height: 500px;
 	width: 800px;
-	padding : 10px;
+	padding: 10px;
 }
 
 .data-div {
@@ -66,9 +66,12 @@
 }
 
 #peer-id-cont {
-	background-color: #dddddd;
-	
 	display: inline-block;
+}
+
+#peer-actions-cont {
+	display: inline-block;
+	float: right;
 }
 
 #peer-status-cont {
@@ -82,17 +85,27 @@
 }
 
 .peer-data div {
-/*  	display: inline-block;  */
+	/*  	display: inline-block;  */
+	
 }
 
 .peer-data {
 	padding-bottom: 20px;
 	padding-top: 15px;
 	border-bottom: thin solid;
+}
 
+.peer-left {
+	background-color: #ffaaaa;
+}
+
+.peer-active {
+	background-color: #dddddd;
 }
 </style>
 <script type="application/javascript">
+    
+    
     
     
     
@@ -201,6 +214,37 @@
             $(ourDataCont).text(status);
         }
         
+        
+        function onPeerReplace(e,pcont){
+
+            $(pcont).find("#replace-button").hide();
+            $(pcont).find("#update-button").show();
+           
+            
+            var idCont = $(pcont).find("#peer-id-cont");
+            idCont.empty();
+            idCont.append($("<input id='new-peer-id' type='text' size=37>").val(pcont.id));
+        }
+        
+        function replacePeer(e, pcont){
+            wse.requestPeerReplace(pcont.id,$(pcont).find("#new-peer-id").val());
+        }
+        
+        function rollbackPeerReplace(peerId){
+            var dataCont = document.getElementById(peerId);
+            $(dataCont).find("#new-peer-id").remove();
+            $(dataCont).find("#peer-id-cont").text(peerId).addClass("peer-active");
+            
+            $(dataCont).find("#replace-button").show();
+            $(dataCont).find("#update-button").hide();
+        }
+        
+        function getDelegateFunction(f,pcont){
+            return function(e){
+        	f.call(this,e,pcont);
+            }
+        }
+        
         function setPeerData(peersData){
             var ourDataCont = document.getElementById('peers-data');
             clearElement(ourDataCont);
@@ -208,18 +252,31 @@
         	var pd = peersData[peerId];
         	var pcont = createPeerCont(peerId);
         	
-        	$(pcont).find("#peer-id-cont").text(peerId);
+        	$(pcont).find("#peer-id-cont").text(peerId).addClass("peer-active");
         	$(pcont).find("#peer-status-cont").text(pd.status);
+        	
+        	$(pcont).find("#replace-button").click(getDelegateFunction(onPeerReplace,pcont));
+        	
+        	$(pcont).find("#update-button").click(getDelegateFunction(replacePeer,pcont));
         	
         	$(pcont).appendTo(ourDataCont);
         	
             };
         }
         
+        function setPeerLeft(peerId){
+            var dataCont = document.getElementById(peerId);
+            if(dataCont){
+        	var idCont = $(dataCont).find("#peer-id-cont");
+        	idCont.removeClass("peer-active").addClass("peer-left");
+        	$(dataCont).find("#peer-status-cont").text("( Has left )");
+            }
+        }
+        
         function updatePeerStatus(peerId, status){
-            var ourDataCont = document.getElementById(peerId);
-            if(ourDataCont){
-        	$(ourDataCont).find("#peer-status-cont").text(status);
+            var dataCont = document.getElementById(peerId);
+            if(dataCont){
+        	$(dataCont).find("#peer-status-cont").text(status);
             }
         }
         
@@ -261,8 +318,20 @@
             
             "STATUS-APP:PEERS:REFRESH" : function(ec){
         	setPeerData(ec.event.data.peersData);
+            },
+            
+            "EBUS:PEER:REMOVED" : function(ec){
+        	setPeerLeft(ec.event.params.peerId);
+            },
+            
+            "STATUS-APP:PEER-REPLACE:DENIED" : function(ec){
+        	var d = ec.event.data;
+        	rollbackPeerReplace(d.oldPeerId);
+        	alert("Can't replace peer '"+d.oldPeerId+"' with '"+d.newPeerId+"' :\n"+d.reason);
             }
         });
+
+
 
 
 
@@ -308,13 +377,15 @@
 			<div>
 				<button id="connect" onclick="connect();">Connect</button>
 				<button id="disconnect" disabled="disabled" onclick="disconnect();">Disconnect</button>
-				<button id="refresh-peers" disabled="disabled" onclick="refreshPeers();">Refresh Peers</button>
+				<button id="refresh-peers" disabled="disabled"
+					onclick="refreshPeers();">Refresh Peers</button>
 			</div>
 			<div>
 				<textarea id="message" style="width: 350px">Here is a message!</textarea>
 			</div>
 			<div>
-				<button id="echo" onclick="echo();" disabled="disabled">Update Status</button>
+				<button id="echo" onclick="echo();" disabled="disabled">Update
+					Status</button>
 			</div>
 		</div>
 		<div id="data-container">
@@ -340,6 +411,10 @@
 				<div id="peer-data-temp" class="peer-data">
 					<div id="peer-id-cont">peer id</div>
 					:
+					<div id="peer-actions-cont">
+						<button id="replace-button">Replace</button>
+						<button id="update-button" style="display: none;">Update</button>
+					</div>
 					<div id="peer-status-cont">peer status</div>
 				</div>
 

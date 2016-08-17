@@ -20,3 +20,13 @@ StatusAppClient.prototype.requestPeersRefresh = function(){
 	et : "STATUS-APP:REQUEST:REFRESH-PEERS"
     });
 }
+
+StatusAppClient.prototype.requestPeerReplace = function(oldPeerId, newPeerId){
+    this.send({
+	et : "STATUS-APP:REQUEST:PEER-REPLACE",
+	data : {
+	    oldPeerId : oldPeerId,
+	    newPeerId : newPeerId
+	}
+    });
+}
