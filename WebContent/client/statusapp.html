@@ -135,7 +135,7 @@
 	                log('Info: WebSocket connection opened.');
 	            },
 	            onmessage : function (event) {
-	                log('Received: ' + event.data);
+// 	                log('Received: ' + event.data);
 	            },
 	            onclose : function (event) {
 	                setConnected(false);
@@ -226,8 +226,22 @@
             idCont.append($("<input id='new-peer-id' type='text' size=37>").val(pcont.id));
         }
         
-        function replacePeer(e, pcont){
+        function requestPeerReplace(e, pcont){
             wse.requestPeerReplace(pcont.id,$(pcont).find("#new-peer-id").val());
+        }
+        
+        
+        function replacePeer(oldPeerId,newPeerId){
+            var dataCont = document.getElementById(oldPeerId);
+            $(dataCont).find("#new-peer-id").remove();
+            $(dataCont).find("#peer-id-cont").text(newPeerId).addClass("peer-active");
+            $(dataCont).find("#peer-status-cont").text("-- waiting for a new status update");
+            
+            $(dataCont).find("#replace-button").show();
+            $(dataCont).find("#update-button").hide();
+            
+            /* don't forget to change the id of the data container to the new peer */
+            $(dataCont).attr("id",newPeerId);
         }
         
         function rollbackPeerReplace(peerId){
@@ -257,7 +271,7 @@
         	
         	$(pcont).find("#replace-button").click(getDelegateFunction(onPeerReplace,pcont));
         	
-        	$(pcont).find("#update-button").click(getDelegateFunction(replacePeer,pcont));
+        	$(pcont).find("#update-button").click(getDelegateFunction(requestPeerReplace,pcont));
         	
         	$(pcont).appendTo(ourDataCont);
         	
@@ -328,6 +342,10 @@
         	var d = ec.event.data;
         	rollbackPeerReplace(d.oldPeerId);
         	alert("Can't replace peer '"+d.oldPeerId+"' with '"+d.newPeerId+"' :\n"+d.reason);
+            },
+            "STATUS-APP:PEER-REPLACE:ACCEPTED" : function(ec){
+        	var d = ec.event.data;
+        	replacePeer(d.oldPeerId,d.newPeerId);
             }
         });
 

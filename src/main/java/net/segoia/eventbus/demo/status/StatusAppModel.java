@@ -59,6 +59,17 @@ public class StatusAppModel {
     public void setPeersData(Map<String, PeerStatusView> peersData) {
 	this.peersData = peersData;
     }
+    
+    
+    public void removePeer(String peerId) {
+	peersData.remove(peerId);
+    }
+    
+    
+    public void addPeer(String peerId, PeerStatusView peerView) {
+	peersData.put(peerId, peerView);
+    }
+    
 
     /* (non-Javadoc)
      * @see java.lang.Object#toString()

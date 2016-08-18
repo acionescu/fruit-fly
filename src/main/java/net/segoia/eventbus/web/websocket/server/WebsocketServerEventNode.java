@@ -13,41 +13,44 @@ import net.segoia.event.eventbus.peers.AgentNode;
 import net.segoia.event.eventbus.peers.DefaultEventRelay;
 import net.segoia.event.eventbus.peers.EventRelay;
 
-public abstract class WebsocketServerEventNode extends AgentNode{
-    
-    
+public abstract class WebsocketServerEventNode extends AgentNode {
+
     private EventNodeWebsocketServerEndpoint ws;
-    
+
     /**
      * Keep a separate bus to handle events coming from the ws client
      */
-    private FilteringEventBus wsEventsBus;
-    
+    protected FilteringEventBus wsEventsBus;
+
     public WebsocketServerEventNode(EventNodeWebsocketServerEndpoint ws) {
 	/* we don't want the agent to autoinitialize, we will do it */
 	super(false);
-	this.ws=ws;
+	this.ws = ws;
     }
-    
+
     @Override
     protected void nodeConfig() {
 	config.setAutoRelayEnabled(true);
 	config.setDefaultRequestedEvents(new TrueCondition());
-	
+
     }
-    
-    /* (non-Javadoc)
+
+    /*
+     * (non-Javadoc)
+     * 
      * @see net.segoia.event.eventbus.peers.AgentNode#nodeInit()
      */
     @Override
     protected void nodeInit() {
 	super.nodeInit();
-	
+
 	wsEventsBus = spawnAdditionalBus(new WebsocketServerNodeDispatcher());
 	wsEventsBus.start();
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see net.segoia.event.eventbus.peers.EventNode#registerHandlers()
      */
     @Override
@@ -59,6 +62,7 @@ public abstract class WebsocketServerEventNode extends AgentNode{
 
     /**
      * Called on events coming from the server
+     * 
      * @param event
      * @return
      */
@@ -72,13 +76,13 @@ public abstract class WebsocketServerEventNode extends AgentNode{
 	return new DefaultEventRelay(peerId, this);
     }
 
-    
     public void onWsEvent(Event event) {
 	wsEventsBus.postEvent(event);
     }
-    
+
     /**
      * Called on events coming from the ws client
+     * 
      * @param event
      */
     protected void handleWsEvent(Event event) {
@@ -89,18 +93,27 @@ public abstract class WebsocketServerEventNode extends AgentNode{
     public void cleanUp() {
 	ws.terminate();
     }
-    
-    class WebsocketServerNodeDispatcher extends SimpleEventDispatcher{
 
-	/* (non-Javadoc)
+    class WebsocketServerNodeDispatcher extends SimpleEventDispatcher {
+
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see net.segoia.event.eventbus.SimpleEventDispatcher#dispatchEvent(net.segoia.event.eventbus.EventContext)
 	 */
 	@Override
 	public boolean dispatchEvent(EventContext ec) {
+	    Event event = ec.event();
+	    /* make sure the client can't inject relays */
+	    event.clearRelays();
+	    
+	    /* process whatever handlers we have for this event */
+	    super.dispatchEvent(ec);
+	    
+	    /* do a final handling of the event */
 	    handleWsEvent(ec.getEvent());
 	    return true;
 	}
 
-	
     }
 }

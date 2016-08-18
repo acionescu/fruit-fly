@@ -98,12 +98,12 @@ public class StatusAppManagerAgent extends AgentNode {
 		forwardTo(new PeerReplaceDenied(data, "Unknown peer id"), event.from());
 	    }
 	});
-
     }
 
     private void updateRecentPeers(String peerId, PeerStatusView status) {
 	recentPeers.put(peerId, status);
 	System.out.println("Recent Peers: "+recentPeers.keySet());
+	System.out.println("new status: "+peerId+" -> "+recentPeers.get(peerId).getStatus());
     }
 
     private Map<String, PeerStatusView> recentPeersSnapshot() {

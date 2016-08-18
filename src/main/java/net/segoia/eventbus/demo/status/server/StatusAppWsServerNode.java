@@ -1,5 +1,7 @@
 package net.segoia.eventbus.demo.status.server;
 
+import java.util.Map;
+
 import net.segoia.event.conditions.AndCondition;
 import net.segoia.event.conditions.Condition;
 import net.segoia.event.conditions.LooseEventMatchCondition;
@@ -10,12 +12,19 @@ import net.segoia.event.eventbus.Event;
 import net.segoia.event.eventbus.EventContext;
 import net.segoia.event.eventbus.EventTracker;
 import net.segoia.event.eventbus.constants.EventParams;
+import net.segoia.event.eventbus.constants.Events;
 import net.segoia.event.eventbus.peers.events.PeerRegisterRequestEvent;
 import net.segoia.event.eventbus.peers.events.PeerRequestUnregisterEvent;
+import net.segoia.event.eventbus.peers.events.PeerUnregisteredEvent;
 import net.segoia.event.eventbus.util.EBus;
 import net.segoia.eventbus.demo.status.PeerStatusView;
+import net.segoia.eventbus.demo.status.StatusApp;
 import net.segoia.eventbus.demo.status.StatusAppModel;
+import net.segoia.eventbus.demo.status.events.PeerReplaceAccepted;
+import net.segoia.eventbus.demo.status.events.PeerReplaceData;
+import net.segoia.eventbus.demo.status.events.PeerReplaceDenied;
 import net.segoia.eventbus.demo.status.events.PeersViewUpdateEvent;
+import net.segoia.eventbus.demo.status.events.ReplacePeerRequestEvent;
 import net.segoia.eventbus.demo.status.events.StatusAppInitEvent;
 import net.segoia.eventbus.web.websocket.server.EventNodeWebsocketServerEndpoint;
 import net.segoia.eventbus.web.websocket.server.WebsocketServerEventNode;
@@ -76,6 +85,68 @@ public class StatusAppWsServerNode extends WebsocketServerEventNode {
 	    }
 
 	});
+
+	addEventHandler(PeerReplaceAccepted.class, (c) -> {
+	    /* make sure we unregister from the old peer, and register to the new one */
+	    PeerReplaceData data = c.getEvent().getData();
+	   
+	    
+	    
+	    String oldPeerId = data.getOldPeerId();
+	    String newPeerId = data.getNewPeerId();
+	    
+	    model.getPeersData().remove(oldPeerId);
+	    model.addPeer(newPeerId, new PeerStatusView(newPeerId, ""));
+	    
+	    unregisterFromPeer(oldPeerId);
+	    registerToPeer(newPeerId);
+	   
+	});
+
+//	/* when we unregister from a peer */
+//	addEventHandler(PeerUnregisteredEvent.class, (c) -> {
+//	    PeerUnregisteredEvent event = c.event();
+//
+//	    /* handle events targeting us */
+//	    if (!getId().equals(event.getData().getPeerId())) {
+//		return;
+//	    }
+//
+//	    model.removePeer(event.from());
+//	});
+
+//	addEventHandler(PeerRegisteredEvent.class, (c) -> {
+//	    PeerRegisteredEvent event = c.event();
+//
+//	    /* handle only events that targets us */
+//	    if (!getId().equals(event.getData().getPeerId())) {
+//		return;
+//	    }
+//	    String from = event.from();
+//	    model.addPeer(from, new PeerStatusView(from, ""));
+//	});
+
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see net.segoia.event.eventbus.peers.EventNode#onPeerRegistered(java.lang.String)
+     */
+    @Override
+    protected void onPeerRegistered(String peerId) {
+	super.onPeerRegistered(peerId);
+
+	/* sent a status update to newly registered peers */
+	
+	forwardTo(getStatusUpdatedEvent(), peerId);
+	
+    }
+
+    private Event getStatusUpdatedEvent() {
+	Event event = Events.builder().peer().status().updated().topic(getId()).build();
+	event.addParam("status", model.getStatus());
+	return event;
     }
 
     private void handleAppInit(StatusAppInitEvent event) {
@@ -97,8 +168,7 @@ public class StatusAppWsServerNode extends WebsocketServerEventNode {
 
     private void registerToPeers() {
 	model.getPeersData().forEach((peerId, peerView) -> {
-	    PeerRegisterRequestEvent regEvent = new PeerRegisterRequestEvent(getId(), peerRegisterCond);
-	    forwardTo(regEvent, peerId);
+	    registerToPeer(peerId);
 	});
     }
 
@@ -107,9 +177,18 @@ public class StatusAppWsServerNode extends WebsocketServerEventNode {
 	    return;
 	}
 	model.getPeersData().forEach((peerId, peerView) -> {
-	    PeerRequestUnregisterEvent ue = new PeerRequestUnregisterEvent(getId());
-	    forwardTo(ue, peerId);
+	    unregisterFromPeer(peerId);
 	});
+    }
+
+    private void registerToPeer(String peerId) {
+	PeerRegisterRequestEvent regEvent = new PeerRegisterRequestEvent(getId(), peerRegisterCond);
+	forwardTo(regEvent, peerId);
+    }
+
+    private void unregisterFromPeer(String peerId) {
+	PeerRequestUnregisterEvent ue = new PeerRequestUnregisterEvent(getId());
+	forwardTo(ue, peerId);
     }
 
     @Override
@@ -117,6 +196,57 @@ public class StatusAppWsServerNode extends WebsocketServerEventNode {
 	super.nodeInit();
 	/* register for all events that are not requests */
 	EBus.getMainNode().registerPeer(this, acceptedServerEvents);
+
+	/* add handlers for events coming from the ws client */
+
+	wsEventsBus.addEventHandler("PEER:STATUS:UPDATED", (c) -> {
+	    Event event = c.event();
+	    
+	    model.setStatus((String)event.getParam(StatusApp.STATUS));
+	    
+	    event.getForwardTo().clear();
+	    forwardToAllKnown(event);
+	    /* we don't want further processing */
+	    event.setHandled();
+	});
+
+	wsEventsBus.addEventHandler(ReplacePeerRequestEvent.class, (c) -> {
+	    ReplacePeerRequestEvent event = c.event();
+
+	    PeerReplaceData replaceData = event.getData();
+	    String newPeerId = replaceData.getNewPeerId();
+	    String oldPeerId = replaceData.getOldPeerId();
+
+	    Map<String, PeerStatusView> peersData = model.getPeersData();
+
+	    /* basic validation */
+	    if (newPeerId == null || oldPeerId == null || newPeerId.isEmpty() || oldPeerId.isEmpty()) {
+		super.handleServerEvent(new PeerReplaceDenied(replaceData, "Peers data can't be null or empty"));
+	    }
+	    /* check if we really are subscribed to the peer we want to replace */
+	    else if (!peersData.containsKey(oldPeerId)) {
+		super.handleServerEvent(
+			new PeerReplaceDenied(replaceData, "You can't replace a peer you're not subscribed to"));
+
+	    } else if (newPeerId.equals(oldPeerId)) {
+		super.handleServerEvent(new PeerReplaceDenied(replaceData, "Replacing a peer with itself is futile"));
+
+	    }
+	    /* don't allow subscribing to the same peer twice */
+
+	    else if (peersData.containsKey(newPeerId)) {
+		super.handleServerEvent(new PeerReplaceDenied(replaceData, "Already subscribed to peer"));
+
+	    }
+	    /* finally is this request if valid, forward it to the other nodes */
+	    else {
+		forwardToAll(event);
+	    }
+
+	    /* we don't want further processing */
+	    event.setHandled();
+
+	});
 
     }
 
@@ -142,24 +272,12 @@ public class StatusAppWsServerNode extends WebsocketServerEventNode {
     @Override
     public void handleWsEvent(Event event) {
 	EventContext ec = new EventContext(event, null);
-	/* make sure the client can't inject relays */
-	event.clearRelays();
-	
-	switch (event.getEt()) {
-	/* we want to rewrite this */
-	case "PEER:STATUS:UPDATED":
-	    event.getForwardTo().clear();
-	    // event.setForwardTo(getKnownPeers(ec));
-	    forwardToAllKnown(event);
-	    return;
 
-	}
-	
-	if (acceptedClientEvents.test(ec)) {
+	/* if the event is not handled and accepted do the default action */
+	if (!ec.event().isHandled() && acceptedClientEvents.test(ec)) {
 	    super.handleWsEvent(event);
-	}
-	else {
-	    System.out.println(getId()+" discarding "+event);
+	} else {
+	    System.out.println(getId() + " discarding " + event);
 	}
     }
 

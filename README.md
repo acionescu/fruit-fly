@@ -26,14 +26,3 @@
  
  
  
- 
- 
-##The app init agent
-
-* Each time a new peer connects, this agent is responsible to sent the initialization data to that peer
-* In this particular case it will send an EBUS:PEER:INIT event containing its id, status and the ids of the 5 remote 
-peers and their statuses
-
-* Agents need to handle concurrency
-
- 
