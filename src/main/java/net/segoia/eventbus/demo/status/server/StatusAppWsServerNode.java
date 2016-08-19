@@ -15,7 +15,6 @@ import net.segoia.event.eventbus.constants.EventParams;
 import net.segoia.event.eventbus.constants.Events;
 import net.segoia.event.eventbus.peers.events.PeerRegisterRequestEvent;
 import net.segoia.event.eventbus.peers.events.PeerRequestUnregisterEvent;
-import net.segoia.event.eventbus.peers.events.PeerUnregisteredEvent;
 import net.segoia.event.eventbus.util.EBus;
 import net.segoia.eventbus.demo.status.PeerStatusView;
 import net.segoia.eventbus.demo.status.StatusApp;
@@ -26,6 +25,7 @@ import net.segoia.eventbus.demo.status.events.PeerReplaceDenied;
 import net.segoia.eventbus.demo.status.events.PeersViewUpdateEvent;
 import net.segoia.eventbus.demo.status.events.ReplacePeerRequestEvent;
 import net.segoia.eventbus.demo.status.events.StatusAppInitEvent;
+import net.segoia.eventbus.demo.status.events.StatusErrorEvent;
 import net.segoia.eventbus.web.websocket.server.EventNodeWebsocketServerEndpoint;
 import net.segoia.eventbus.web.websocket.server.WebsocketServerEventNode;
 
@@ -89,42 +89,40 @@ public class StatusAppWsServerNode extends WebsocketServerEventNode {
 	addEventHandler(PeerReplaceAccepted.class, (c) -> {
 	    /* make sure we unregister from the old peer, and register to the new one */
 	    PeerReplaceData data = c.getEvent().getData();
-	   
-	    
-	    
+
 	    String oldPeerId = data.getOldPeerId();
 	    String newPeerId = data.getNewPeerId();
-	    
+
 	    model.getPeersData().remove(oldPeerId);
 	    model.addPeer(newPeerId, new PeerStatusView(newPeerId, ""));
-	    
+
 	    unregisterFromPeer(oldPeerId);
 	    registerToPeer(newPeerId);
-	   
+
 	});
 
-//	/* when we unregister from a peer */
-//	addEventHandler(PeerUnregisteredEvent.class, (c) -> {
-//	    PeerUnregisteredEvent event = c.event();
-//
-//	    /* handle events targeting us */
-//	    if (!getId().equals(event.getData().getPeerId())) {
-//		return;
-//	    }
-//
-//	    model.removePeer(event.from());
-//	});
+	// /* when we unregister from a peer */
+	// addEventHandler(PeerUnregisteredEvent.class, (c) -> {
+	// PeerUnregisteredEvent event = c.event();
+	//
+	// /* handle events targeting us */
+	// if (!getId().equals(event.getData().getPeerId())) {
+	// return;
+	// }
+	//
+	// model.removePeer(event.from());
+	// });
 
-//	addEventHandler(PeerRegisteredEvent.class, (c) -> {
-//	    PeerRegisteredEvent event = c.event();
-//
-//	    /* handle only events that targets us */
-//	    if (!getId().equals(event.getData().getPeerId())) {
-//		return;
-//	    }
-//	    String from = event.from();
-//	    model.addPeer(from, new PeerStatusView(from, ""));
-//	});
+	// addEventHandler(PeerRegisteredEvent.class, (c) -> {
+	// PeerRegisteredEvent event = c.event();
+	//
+	// /* handle only events that targets us */
+	// if (!getId().equals(event.getData().getPeerId())) {
+	// return;
+	// }
+	// String from = event.from();
+	// model.addPeer(from, new PeerStatusView(from, ""));
+	// });
 
     }
 
@@ -138,9 +136,9 @@ public class StatusAppWsServerNode extends WebsocketServerEventNode {
 	super.onPeerRegistered(peerId);
 
 	/* sent a status update to newly registered peers */
-	
+
 	forwardTo(getStatusUpdatedEvent(), peerId);
-	
+
     }
 
     private Event getStatusUpdatedEvent() {
@@ -201,11 +199,22 @@ public class StatusAppWsServerNode extends WebsocketServerEventNode {
 
 	wsEventsBus.addEventHandler("PEER:STATUS:UPDATED", (c) -> {
 	    Event event = c.event();
-	    
-	    model.setStatus((String)event.getParam(StatusApp.STATUS));
-	    
-	    event.getForwardTo().clear();
-	    forwardToAllKnown(event);
+	    String status = (String) event.getParam(StatusApp.STATUS);
+
+	    /* don't let status be null or empty */
+	    if (status == null || status.isEmpty()) {
+		super.handleServerEvent(new StatusErrorEvent("The status can't be null or empty",model.getStatus()));
+	    }
+	    /* don't let status exceed the max length */
+	    else if (status.length() > StatusApp.maxStatusLength) {
+		super.handleServerEvent(
+			new StatusErrorEvent("The status can't exceed " + StatusApp.maxStatusLength + " characters.",model.getStatus()));
+	    } else {
+		model.setStatus(status);
+		/* forward the status to the registered peers */
+		event.getForwardTo().clear();
+		forwardToAllKnown(event);
+	    }
 	    /* we don't want further processing */
 	    event.setHandled();
 	});

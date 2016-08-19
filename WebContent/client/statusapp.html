@@ -114,6 +114,9 @@
     
     
     
+    
+    
+    
         var wse = null;
 
         function setConnected(connected) {
@@ -132,6 +135,7 @@
 	var wshandler = { 
 	            onopen : function () {
 	                setConnected(true);
+	                $("#infoCont").hide();
 	                log('Info: WebSocket connection opened.');
 	            },
 	            onmessage : function (event) {
@@ -139,7 +143,10 @@
 	            },
 	            onclose : function (event) {
 	                setConnected(false);
-	                log('Info: WebSocket connection closed, Code: ' + event.code + (event.reason == "" ? "" : ", Reason: " + event.reason));
+	                var msg = 'WebSocket connection closed, Code: ' + event.code + (event.reason == "" ? "" : ", Reason: " + event.reason);
+	                
+	                $("#infoCont").text(msg).show();
+	                log(msg);
 	            } 
 	};
 
@@ -209,7 +216,6 @@
         }
         
         function setOurStatus(status){
-            console.log("setting our status "+status);
             var ourDataCont = document.getElementById('our-status');
             $(ourDataCont).text(status);
         }
@@ -346,8 +352,16 @@
             "STATUS-APP:PEER-REPLACE:ACCEPTED" : function(ec){
         	var d = ec.event.data;
         	replacePeer(d.oldPeerId,d.newPeerId);
+            },
+            
+            "STATUS-APP:STATUS:ERROR" : function(ec){
+        	setOurStatus(ec.event.data.currentStatus);
+        	alert(ec.event.data.reason);
             }
         });
+
+
+
 
 
 
@@ -398,6 +412,7 @@
 				<button id="refresh-peers" disabled="disabled"
 					onclick="refreshPeers();">Refresh Peers</button>
 			</div>
+			<div id="infoCont" style="display: none;"></div>
 			<div>
 				<textarea id="message" style="width: 350px">Here is a message!</textarea>
 			</div>

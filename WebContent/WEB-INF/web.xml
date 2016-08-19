@@ -13,12 +13,17 @@
       <!-- <welcome-file>default.jsp</welcome-file> -->
    </welcome-file-list>
    
+<!--    <context-param> -->
+<!--       <param-name>org.apache.tomcat.websocket.textBufferSize</param-name> -->
+<!--       <param-value>65000</param-value> -->
+<!--    </context-param> -->
+   
    <listener>
       <listener-class>net.segoia.eventbus.web.websocket.WsRequestListener</listener-class>
    </listener>
    
-   <listener>
-      <listener-class>net.segoia.eventbus.demo.status.StatusApp</listener-class>
-   </listener>
+<!--    <listener> -->
+<!--       <listener-class>net.segoia.eventbus.demo.status.StatusApp</listener-class> -->
+<!--    </listener> -->
   
 </web-app>

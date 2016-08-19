@@ -4,14 +4,14 @@ import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 import javax.servlet.annotation.WebListener;
 
-import net.segoia.event.eventbus.EventsRepository;
 import net.segoia.event.eventbus.util.EBus;
 
-//@WebListener
+@WebListener
 public class StatusApp implements ServletContextListener {
     /* how many peers can a user follow */
     public static int maxPartnersPerUser = 5;
     public static int maxQuoteAgents = maxPartnersPerUser + 1;
+    public static int maxStatusLength=500;
 
     public static StatusAppStats stats = new StatusAppStats();
 

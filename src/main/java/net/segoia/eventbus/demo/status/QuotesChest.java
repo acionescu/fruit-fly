@@ -73,7 +73,7 @@ public class QuotesChest {
     	"If you can't be with the one you love, then shag the one your with. 	-- Austin Powers - The Spy who shagged me \n" + 
     	"Efficiency can magnify good, but it magnifies evil just as well. So, we should not be surprised to find that modern electronic communication magnifies stupidity as *efficiently* as it magnifies intelligence. 	-- Robert A. Matern \n" + 
     	"The church saves sinners, but science seeks to stop their manufacture. 	-- Elbert Hubbard \n" + 
-    	"\"Have a clue.  They're cheap.  All you have to do is pay ttention.\" 	- Unknown \n" + 
+    	"\"Have a clue.  They're cheap.  All you have to do is pay attention.\" 	- Unknown \n" + 
     	"\"Those who desire to give up Freedom in order to gain Security, will not have, nor do they deserve, either one.\" 	-- Thomas Jefferson \n" + 
     	"Men are born ignorant, not stupid; they are made stupid by education. 	-- Bertrand Russell \n" + 
     	"A picture is worth a thousand words. It just takes up more bandwidth. \n" + 
@@ -375,7 +375,7 @@ public class QuotesChest {
     	"We should be taught not to wait for inspiration to start a thing. Action always generates inspiration. Inspiration seldom generates action. 	— Frank Tibolt \n" + 
     	"The world is full of people whose notion of a satisfactory future is, in fact, a return to the idealised past. 	-- Robertson Davies \n" + 
     	"Judge a man by his questions, rather than his answers. 	-- Voltaire \n" + 
-    	"Even if you're are on the right track, you'll get run over if you just sit there. 	-- Will Rogers \n" + 
+    	"Even if you're on the right track, you'll get run over if you just sit there. 	-- Will Rogers \n" + 
     	"You're not old until regret takes the place of your dreams. \n" + 
     	"\"Christians, like slaves and soldiers, ask no questions.\" 	-- Jerry Falwell (August 11, 1933 - May 15, 2007) \n" + 
     	"\"Ideas are a dime a dozen.  It's execution that counts.\" 	-- Frank Herbert \n" + 
