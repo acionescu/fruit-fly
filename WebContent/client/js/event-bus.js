@@ -36,15 +36,14 @@ WsState.prototype.handle = function(ec) {
 	/* call it */
 	h(ec);
     }
-    
-}
 
+}
 
 EBUS.WS.STATES.OPENED = new WsState("OPENED", {
     "EBUS:PEER:CONNECTED" : function(ec) {
-	
+
 	/* set on the endpoint the id assigned by the server */
-	ec.wse.remoteId=ec.event.params.clientId;
+	ec.wse.remoteId = ec.event.params.clientId;
 
 	var authEvent = {
 	    et : "EBUS:PEER:AUTH",
@@ -52,18 +51,18 @@ EBUS.WS.STATES.OPENED = new WsState("OPENED", {
 		clientId : ec.event.params.clientId
 	    }
 	}
-	ec.wse.state=EBUS.WS.STATES.CONNECTED;
+	ec.wse.state = EBUS.WS.STATES.CONNECTED;
 	ec.wse.send(authEvent);
     }
 
 });
 
-EBUS.WS.STATES.CONNECTED = new WsState("CONNECTED",{
-    "EBUS:PEER:AUTHENTICATED" : function(ec){
+EBUS.WS.STATES.CONNECTED = new WsState("CONNECTED", {
+    "EBUS:PEER:AUTHENTICATED" : function(ec) {
+	ec.wse.active = true;
 	ec.wse.state = ec.wse.activeState;
     }
 });
-
 
 function EventWsEndpoint(url, autoConnect, handler, activeState) {
     this.id = "WSE-" + ++EBUS.WS.STATS.instantiated;
@@ -72,11 +71,12 @@ function EventWsEndpoint(url, autoConnect, handler, activeState) {
 
     /* ws handlers */
     this.handlers = [ this ];
-    
+
     /**
-     * This is the normal functioning state, after we were successfully accepted by the server
+     * This is the normal functioning state, after we were successfully accepted
+     * by the server
      */
-    this.activeState=activeState;
+    this.activeState = activeState;
 
     if (handler) {
 	this.handlers.push(handler);
@@ -87,16 +87,19 @@ function EventWsEndpoint(url, autoConnect, handler, activeState) {
 
     /* the current state of the endpoint */
     this.state;
-    
+
     /* the id assigned by the server */
     this.remoteId;
-    
+
     /* internal data for this endpoint */
-    this.data ={};
-    
+    this.data = {};
+
     /* the last event received */
     this.lastEvent;
 
+    /* true if we are in the active state */
+    this.active;
+    
     if (autoConnect) {
 	this.connect();
     }
@@ -106,7 +109,6 @@ function EventWsEndpoint(url, autoConnect, handler, activeState) {
 EventWsEndpoint.prototype = Object.create(EventWsEndpoint.prototype);
 
 EventWsEndpoint.prototype.constructor = EventWsEndpoint;
-
 
 /**
  * Starts ws connection
@@ -138,11 +140,12 @@ EventWsEndpoint.prototype.handlersDelegate = function(funcName) {
 }
 
 EventWsEndpoint.prototype.callHandlers = function(funcName, args) {
+    var self = this;
     this.handlers.forEach(function(h) {
 	try {
 	    h[funcName].apply(h, args);
 	} catch (e) {
-	    this.log("error: " + e);
+	    self.log("error: " + e + "handler: "+h+" func: "+funcName);
 	}
     });
 }
@@ -176,12 +179,12 @@ EventWsEndpoint.prototype.onopen = function() {
 /* ws.onclose */
 EventWsEndpoint.prototype.onclose = function(event) {
     this.log("closed -> " + event);
-    
+
 }
 
 /* ws.onmessage */
 EventWsEndpoint.prototype.onmessage = function(event) {
-    this.log("receiving: "+event.data);
+    this.log("receiving: " + event.data);
     this.lastEvent = JSON.parse(event.data);
     if (this.state != null) {
 	this.state.handle({
@@ -196,3 +199,5 @@ EventWsEndpoint.prototype.onmessage = function(event) {
 EventWsEndpoint.prototype.onerror = function(event) {
     this.log("error: " + event);
 }
+
+

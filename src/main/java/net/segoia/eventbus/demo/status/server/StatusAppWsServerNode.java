@@ -192,8 +192,6 @@ public class StatusAppWsServerNode extends WebsocketServerEventNode {
     @Override
     protected void nodeInit() {
 	super.nodeInit();
-	/* register for all events that are not requests */
-	EBus.getMainNode().registerPeer(this, acceptedServerEvents);
 
 	/* add handlers for events coming from the ws client */
 
@@ -256,6 +254,12 @@ public class StatusAppWsServerNode extends WebsocketServerEventNode {
 	    event.setHandled();
 
 	});
+	
+	
+	
+	
+	/* register for all events that are not requests */
+	EBus.getMainNode().registerPeer(this, acceptedServerEvents);
 
     }
 

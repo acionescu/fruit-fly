@@ -1,5 +1,6 @@
 package net.segoia.eventbus.web.websocket.server;
 
+import javax.websocket.EndpointConfig;
 import javax.websocket.OnClose;
 import javax.websocket.OnError;
 import javax.websocket.OnMessage;
@@ -15,27 +16,23 @@ public abstract class EventNodeWebsocketServerEndpoint extends WsEndpoint {
     private WebsocketServerEventNode localNode;
 
     @OnOpen
-    public void onOpen(Session session) {
-	this.session = session;
-
-	localNode = buildLocalNode();
-
+    public void onOpen(Session session, EndpointConfig config) {
+	setUp(session, config);
 	state = CONNECTED;
 	sendConnectedEvent();
 
     }
 
     @OnClose
-    public void onClose() {
+    public void onClose(Session session) {
 	localNode.terminate();
     }
 
     @OnMessage
     public void onMessage(String message) {
 	try {
-	    Event event = Event.fromJson(message);
-	    System.out.println(event);
-	    state.handleEvent(event, this);
+	    Event event = buildEventFromMessage(message);
+	    onEvent(event);
 	} catch (Exception e) {
 	    e.printStackTrace();
 	}
@@ -43,9 +40,34 @@ public abstract class EventNodeWebsocketServerEndpoint extends WsEndpoint {
 
     @OnError
     public void onError(Throwable t) {
-	System.err.println("Terminating node "+getLocalNodeId() + " due to error ");
+	System.err.println("Terminating node " + getLocalNodeId() + " due to error ");
 	t.printStackTrace();
 	localNode.terminate();
+    }
+
+    /**
+     * Set up this endpoint on open
+     * 
+     * @param session
+     * @param config
+     */
+    protected void setUp(Session session, EndpointConfig config) {
+	this.session = session;
+	localNode = buildLocalNode();
+    }
+
+    protected Event buildEventFromMessage(String message) {
+	return Event.fromJson(message);
+    }
+
+    /**
+     * Called when an event is received
+     * 
+     * @param event
+     */
+    protected void onEvent(Event event) {
+	/* by default delegate this to the current state */
+	state.handleEvent(event, this);
     }
 
     protected void sendConnectedEvent() {
@@ -56,7 +78,7 @@ public abstract class EventNodeWebsocketServerEndpoint extends WsEndpoint {
     }
 
     protected abstract WebsocketServerEventNode buildLocalNode();
-    
+
     @Override
     public String getLocalNodeId() {
 	return localNode.getId();
@@ -65,7 +87,7 @@ public abstract class EventNodeWebsocketServerEndpoint extends WsEndpoint {
     @Override
     public void onAccepted() {
 	state = ACCEPTED;
-	
+
 	sendAuthenticated();
 	/* now we can init the local node */
 
@@ -73,15 +95,15 @@ public abstract class EventNodeWebsocketServerEndpoint extends WsEndpoint {
 
 	System.out.println(session.getId());
     }
-    
+
     /**
-     * This is called once the client websocket connection is accepted
-     * </br>
+     * This is called once the client websocket connection is accepted </br>
      * Override to initialize the local event node for this connection
+     * 
      * @param localNode
      */
     protected abstract void initLocalNode(WebsocketServerEventNode localNode);
-    
+
     public void sendAuthenticated() {
 	Event event = Events.builder().ebus().peer().authenticated().build();
 	sendEvent(event);

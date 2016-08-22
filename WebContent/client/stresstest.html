@@ -1,0 +1,78 @@
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+<title>Ephemeral microblogging app - stress test</title>
+
+<script src="js/event-bus.js"></script>
+<script src="js/status-app.js"></script>
+<script src="js/status-stress.js"></script>
+<script src="../tp/jquery-2.1.1.js"></script>
+
+<script src="../tp/jquery-ui.js"></script>
+
+<link rel="stylesheet" href="../tp/jquery-ui.css">
+
+
+<script>
+    var agentsCount = 10;
+    var agentActionDelay = 1000;
+    var agentStartDelay = 200;
+
+    $(document).ready(function(){
+	updateTarget("/ebus/ws/eventbus");	
+    });
+    
+    
+    
+    var agents=[];
+    
+    var startInterval;
+    
+    function startTest() {
+	var target = document.getElementById('target').value;
+	startInterval = setInterval(startAgent,agentStartDelay,target);
+    }
+    
+    
+    function stopTest(){
+	agents.forEach(function(a){
+	   a.stop(); 
+	});
+    }
+    
+    
+    function startAgent(target){
+	var a = new StressAgent(target,true);
+	a.start(agentActionDelay);
+	agents.push(a);
+	
+	if(agents.length == agentsCount){
+	    clearInterval(startInterval);
+	    console.log("finished starting agents");
+	}
+    }
+    
+    
+    
+    function updateTarget(target) {
+        if (window.location.protocol == 'http:') {
+            document.getElementById('target').value = 'ws://' + window.location.host + target;
+        } else {
+            document.getElementById('target').value = 'wss://' + window.location.host + target;
+        }
+    }
+    
+</script>
+
+
+</head>
+
+<body>
+	<div>
+		<input id="target" type="text" size="40" style="width: 350px" />
+	</div>
+	<button onclick="startTest()">Start</button>
+	<button onclick="stopTest()">Stop</button>
+</body>
+
+
+</html>

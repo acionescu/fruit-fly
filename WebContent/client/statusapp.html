@@ -1,6 +1,6 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
-<title>Apache Tomcat WebSocket Examples: Echo</title>
+<title>Ephemeral microblogging app - proof of concept</title>
 
 <script src="js/event-bus.js"></script>
 <script src="js/status-app.js"></script>
@@ -104,17 +104,6 @@
 }
 </style>
 <script type="application/javascript">
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
     
     
         var wse = null;
@@ -323,7 +312,7 @@
         }
 
         var appState = new WsState("APP_STATE",{
-            /* when the server sends as the init data */
+            /* when the server sends us the init data */
             "STATUS-APP:PEER:INIT" : function(ec){
         	
         	var model = ec.event.data.model;
@@ -359,18 +348,6 @@
         	alert(ec.event.data.reason);
             }
         });
-
-
-
-
-
-
-
-
-
-
-
-
 
 </script>
 </head>

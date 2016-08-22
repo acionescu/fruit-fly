@@ -10,7 +10,7 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.annotation.WebFilter;
 
-@WebFilter(value="/ws/*")
+@WebFilter(value= "/ws/*")
 public class StatsAppFilter implements Filter{
 
     @Override
@@ -22,7 +22,7 @@ public class StatsAppFilter implements Filter{
     @Override
     public void doFilter(ServletRequest arg0, ServletResponse arg1, FilterChain arg2)
 	    throws IOException, ServletException {
-	System.out.println("hello filter "+arg0.getRemoteAddr());
+	System.out.println("hello filter "+arg0.getRemoteAddr()+ " "+arg0.getProtocol());
 	arg2.doFilter(arg0, arg1);
 	
     }

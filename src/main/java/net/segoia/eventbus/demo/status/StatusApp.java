@@ -22,6 +22,10 @@ public class StatusApp implements ServletContextListener {
 	
 	/* start app init agent */
 	new StatusAppManagerAgent();
+	
+	/* start the stats listener */
+	new StatusAppStatsNode().init();
+	
 
 	/* start quote agents */
 
