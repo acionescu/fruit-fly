@@ -32,9 +32,7 @@ public class StatusApp implements ServletContextListener {
 	for (int i = 0; i < maxQuoteAgents; i++) {
 	    QuoteAsStatusAgent ag = new QuoteAsStatusAgent();
 	}
-	System.out.println("Loading events");
-//	EventsRepository.load();
-	System.out.println("Initialized");
+
     }
 
     @Override

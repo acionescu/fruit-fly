@@ -31,7 +31,6 @@ public class EventNodeWebsocketClientEndpoint extends WsEndpoint{
     public void onOpen(Session session) {
 	this.session = session;
 	state = WAIT_CONNECTED;
-	System.out.println("open session");
     }
 
     @OnMessage
@@ -59,7 +58,7 @@ public class EventNodeWebsocketClientEndpoint extends WsEndpoint{
 
     @OnClose
     public void onClose(Session session, CloseReason closeReason) {
-	System.out.println("closed " + closeReason);
+
     }
 
     @Override

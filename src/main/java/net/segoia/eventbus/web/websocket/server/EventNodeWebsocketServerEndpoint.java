@@ -25,6 +25,7 @@ public abstract class EventNodeWebsocketServerEndpoint extends WsEndpoint {
 
     @OnClose
     public void onClose(Session session) {
+	System.out.println("terminating node");
 	localNode.terminate();
     }
 
@@ -93,7 +94,6 @@ public abstract class EventNodeWebsocketServerEndpoint extends WsEndpoint {
 
 	initLocalNode(localNode);
 
-	System.out.println(session.getId());
     }
 
     /**

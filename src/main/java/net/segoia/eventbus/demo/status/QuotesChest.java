@@ -474,9 +474,4 @@ public class QuotesChest {
 	int i = (int)Math.round(Math.random()*(quotes.length-1));
 	return quotes[i];
     }
-    
-    public static void main(String[] args) {
-	System.out.println(getRandomQuote());
-    }
-
 }

@@ -49,6 +49,13 @@ public class StatusAppStats implements EventListener{
     public void onSessionTerminated(EventContext ec) {
 	
     }
+    
+    /**
+     * @return the httpStats
+     */
+    public HttpRequestStats getHttpStats() {
+        return httpStats;
+    }
 
     @Override
     public void init() {

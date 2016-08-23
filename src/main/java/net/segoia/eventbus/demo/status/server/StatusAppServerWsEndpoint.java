@@ -6,7 +6,9 @@ import javax.websocket.Session;
 import javax.websocket.server.ServerEndpoint;
 
 import net.segoia.event.eventbus.Event;
+import net.segoia.event.eventbus.EventContext;
 import net.segoia.eventbus.events.web.util.WebEventsUtil;
+import net.segoia.eventbus.stats.SimpleStats;
 import net.segoia.eventbus.web.websocket.server.EventNodeEndpointConfigurator;
 import net.segoia.eventbus.web.websocket.server.EventNodeWebsocketServerEndpoint;
 import net.segoia.eventbus.web.websocket.server.WebsocketServerEventNode;
@@ -19,6 +21,8 @@ public class StatusAppServerWsEndpoint extends EventNodeWebsocketServerEndpoint 
     private HttpSession httpSession;
     
     private Event rootEvent;
+    
+    private SimpleStats stats = new SimpleStats();
 
     @Override
     protected WebsocketServerEventNode buildLocalNode() {
@@ -57,6 +61,19 @@ public class StatusAppServerWsEndpoint extends EventNodeWebsocketServerEndpoint 
 	return event;
     }
     
+    /* (non-Javadoc)
+     * @see net.segoia.eventbus.web.websocket.server.EventNodeWebsocketServerEndpoint#onEvent(net.segoia.event.eventbus.Event)
+     */
+    @Override
+    protected void onEvent(Event event) {
+	super.onEvent(event);
+	stats.onEvent(new EventContext(event, null));
+	if(stats.getActivityIndex() > 10) {
+	    System.out.println(getLocalNodeId()+" terminating");
+	    terminate();
+	}
+    }
+
     private Event getRootEvent() {
 	if(this.rootEvent == null) {
 	    this.rootEvent = WebEventsUtil.getRootEvent(httpSession);

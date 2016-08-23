@@ -149,7 +149,6 @@ public class StatusAppWsServerNode extends WebsocketServerEventNode {
 
     private void handleAppInit(StatusAppInitEvent event) {
 	model = event.getData().getModel();
-	System.out.println(getId() + " we have " + model.getPeersData().size() + " peers");
 	/* register for status update to the peers */
 	registerToPeers();
     }
@@ -289,9 +288,7 @@ public class StatusAppWsServerNode extends WebsocketServerEventNode {
 	/* if the event is not handled and accepted do the default action */
 	if (!ec.event().isHandled() && acceptedClientEvents.test(ec)) {
 	    super.handleWsEvent(event);
-	} else {
-	    System.out.println(getId() + " discarding " + event);
-	}
+	} 
     }
 
 }

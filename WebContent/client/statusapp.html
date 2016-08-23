@@ -12,6 +12,12 @@
 
 
 <style type="text/css">
+
+body {
+	font-family: cursive;
+	font-size: medium;
+}
+
 #connect-container {
 	float: left;
 	width: 400px
@@ -47,6 +53,13 @@
 }
 
 #data-container {
+	float: left;
+	height: 500px;
+	width: 800px;
+	padding: 10px;
+}
+
+#info-container {
 	float: left;
 	height: 500px;
 	width: 800px;
@@ -106,6 +119,13 @@
 <script type="application/javascript">
     
     
+
+        $(document).ready(function(){
+            updateTarget("/ebus/ws/eventbus");
+            setConnected(false);
+        });
+    
+    
         var wse = null;
 
         function setConnected(connected) {
@@ -113,6 +133,19 @@
             document.getElementById('disconnect').disabled = !connected;
             document.getElementById('echo').disabled = !connected;
             document.getElementById('refresh-peers').disabled = !connected;
+            setVisible('data-container', connected);
+            setVisible('info-container', !connected);
+            
+        }
+        
+        function setVisible(id, visible){
+            var elem = document.getElementById(id);
+            if(visible){
+            	$(elem).show();
+            }
+            else{
+        	$(elem).hide();
+            }
         }
 
         function connect() {
@@ -214,7 +247,7 @@
 
             $(pcont).find("#replace-button").hide();
             $(pcont).find("#update-button").show();
-           
+            $(pcont).find("#cancel-button").show();
             
             var idCont = $(pcont).find("#peer-id-cont");
             idCont.empty();
@@ -234,6 +267,7 @@
             
             $(dataCont).find("#replace-button").show();
             $(dataCont).find("#update-button").hide();
+            $(dataCont).find("#cancel-button").hide();
             
             /* don't forget to change the id of the data container to the new peer */
             $(dataCont).attr("id",newPeerId);
@@ -246,6 +280,11 @@
             
             $(dataCont).find("#replace-button").show();
             $(dataCont).find("#update-button").hide();
+            $(dataCont).find("#cancel-button").hide();
+        }
+        
+        function cancelPeerReplace(e, pcont){
+            rollbackPeerReplace(pcont.id);
         }
         
         function getDelegateFunction(f,pcont){
@@ -267,6 +306,8 @@
         	$(pcont).find("#replace-button").click(getDelegateFunction(onPeerReplace,pcont));
         	
         	$(pcont).find("#update-button").click(getDelegateFunction(requestPeerReplace,pcont));
+        	
+        	$(pcont).find("#cancel-button").click(getDelegateFunction(cancelPeerReplace,pcont));
         	
         	$(pcont).appendTo(ourDataCont);
         	
@@ -349,6 +390,8 @@
             }
         });
 
+
+
 </script>
 </head>
 <body>
@@ -359,56 +402,90 @@
 	</div>
 	<div id="main-container">
 		<div id="connect-container">
+			<div></div>
 			<div>
-				<span>Connect to service implemented using:</span> <br />
-				<!--             echo example using new programmatic API on the server side -->
-				<!--             <input id="radio1" type="radio" name="group1" value="/examples/websocket/echoProgrammatic" -->
-				<!--                    onclick="updateTarget(this.value);"/> <label for="radio1">programmatic API</label> -->
-				<!--             <br/> -->
-				<!--             echo example using new annotation API on the server side -->
-				<!--             <input id="radio2" type="radio" name="group1" value="/examples/websocket/echoAnnotation" -->
-				<!--                    onclick="updateTarget(this.value);"/> <label for="radio2">annotation API (basic)</label> -->
-				<!--             <br/> -->
-				<!-- echo example using new annotation API on the server side -->
-				<input id="radio3" type="radio" name="group1"
-					value="/ebus/ws/eventbus" onclick="updateTarget(this.value);" /> <label
-					for="radio3">Default</label> <br />
-				<!-- echo example using new annotation API on the server side -->
-				<!-- Disabled by default -->
-				<!--
-            <input id="radio4" type="radio" name="group1" value="/examples/websocket/echoAsyncAnnotation"
-                   onclick="updateTarget(this.value);"/> <label for="radio4">annotation API (async)</label>
-            -->
-			</div>
-			<div>
-				<input id="target" type="text" size="40" style="width: 350px" />
+				<input id="target" type="text" size="40" style="width: 350px"
+					hidden="true" />
 			</div>
 			<div>
 				<button id="connect" onclick="connect();">Connect</button>
 				<button id="disconnect" disabled="disabled" onclick="disconnect();">Disconnect</button>
 				<button id="refresh-peers" disabled="disabled"
-					onclick="refreshPeers();">Refresh Peers</button>
+					onclick="refreshPeers();">Replace Peers</button>
 			</div>
 			<div id="infoCont" style="display: none;"></div>
 			<div>
-				<textarea id="message" style="width: 350px">Here is a message!</textarea>
+				<textarea id="message" style="width: 330px; height: 60px">Here is a message!</textarea>
 			</div>
 			<div>
 				<button id="echo" onclick="echo();" disabled="disabled">Update
 					Status</button>
 			</div>
 		</div>
+		
+		<div id="info-container">
+			<p><h2>Welcome</h2></p>
+			<p style="font-size: large;">This is a status sharing demo app, built with web-events and websockets.</p>
+			Here are the specs:
+			
+			<p><h3>The user:</h3>
+			
+			<ul>
+				<li>User loads the page</li>
+				<li>Hits <b>Connect</b> button</li>
+				<li>Sees a widget with:
+					<ul>
+						<li>His defaults status (e.g. "Hi, I'm visitor xyz")</li>
+						<li>His own unique id</li>
+						<li>5 random peers and their statuses</li>
+					</ul>
+				</li>
+				<li>Can:
+					<ul>
+
+						<li>Update his own status ( max 500 characters )</li>
+						<li>Replace the list of peers ( get 5 random peers )</li>
+						<li>Change the id of one of the peers with a known one (
+							possibly the one of a friend )</li>
+					</ul>
+				</li>
+			</ul>
+			</p>
+			<p><h3>The server:</h3>
+			
+			<ul>
+				
+				<li>
+				Provides:
+					<ul>
+						<li>5 default agents ( bots ) that set as status an
+							interesting quote. The agents will update their status every 2
+							minutes</li>
+					</ul>
+				</li>
+				<li>Security:
+					<ul>
+						<li>The app will permit only a certain level of activity per
+							ip and connection</li>
+						<li>If that is exceeded, it will close/refuse the connection</li>
+					</ul>
+				</li>
+			</ul>
+			</p>
+
+		</div>
+		
 		<div id="data-container">
 			<div>
 				<label for="our-data">My data: </label>
 				<div id="our-data">
 
 					<div>
-						<label for="our-id">Id: </label>
+						<label for="our-id">Id:  </label>
 						<div id="our-id" class="data-div"></div>
 					</div>
 					<div>
-						<label for="our-status">Status: </label>
+						<label for="our-status">Status:  </label>
 						<div id="our-status" class="data-div"></div>
 					</div>
 				</div>
@@ -424,6 +501,7 @@
 					<div id="peer-actions-cont">
 						<button id="replace-button">Replace</button>
 						<button id="update-button" style="display: none;">Update</button>
+						<button id="cancel-button" style="display: none;">Cancel</button>
 					</div>
 					<div id="peer-status-cont">peer status</div>
 				</div>

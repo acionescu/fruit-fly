@@ -17,12 +17,12 @@ public class SimpleStats implements EventListener{
 	lastEventsTsDiff = now - lastEventTs;
 	lastEventTs = now;
 	
-	recentFrequency=recentFrequency*0.9f+getLastFrequency()*0.1f;
+	recentFrequency=recentFrequency*0.9f+getLastFrequency()*0.01f;
     }
     
     
     private long duration() {
-	return ((System.currentTimeMillis() - startTime))/1000;
+	return 1+((System.currentTimeMillis() - startTime))/1000;
     }
 
     public float getAvgFrequency() {
@@ -39,9 +39,6 @@ public class SimpleStats implements EventListener{
     public float getRecentFrequency() {
 	return recentFrequency;
     }
-    
-    
-    
     
     /**
      * @return the startTime
@@ -64,7 +61,9 @@ public class SimpleStats implements EventListener{
         return lastEventTs;
     }
     
-    
+    public float getActivityIndex() {
+	return recentFrequency*0.1f+0.9f*((float)eventsCount)/duration();
+    }
     
 
     /* (non-Javadoc)

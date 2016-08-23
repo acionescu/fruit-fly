@@ -48,14 +48,12 @@ public class StatusAppManagerAgent extends AgentNode {
 	addEventHandler("EBUS:PEER:NEW", (c) -> {
 	    Event event = c.getEvent();
 	    String peerId = (String) event.getParam(EventParams.peerId);
-	    System.out.println("processing new peer event "+event.getId() +" from "+event.from() + " via "+event.getLastRelay());
 	    Map<String, PeerStatusView> peersCopy = recentPeersSnapshot();
 	    StatusAppModel model = new StatusAppModel(peerId, "Hi, I'm visitor " + StatusApp.stats.newPeer(),
 		    peersCopy);
 	    StatusAppInitEvent appInitEvent = new StatusAppInitEvent(model);
 
 	    forwardTo(appInitEvent, peerId);
-	    System.out.println("send init with "+peersCopy.size()+" peers");
 	    /* update peers */
 	    updateRecentPeers(peerId, new PeerStatusView(peerId, model.getStatus()));
 	    
@@ -70,7 +68,6 @@ public class StatusAppManagerAgent extends AgentNode {
 
 	    recentPeers.remove(peerId);
 	    allPeersIds.remove(peerId);
-	    System.out.println("Removed peer "+peerId);
 	});
 
 	addEventHandler(RefreshPeersRequestEvent.class, (c) -> {
@@ -93,7 +90,6 @@ public class StatusAppManagerAgent extends AgentNode {
 		forwardTo(new PeerReplaceAccepted(data), event.from());
 	    }
 	    else {
-		System.out.println("sending deny to "+event.from());
 		/* deny replace if the requested peer is not present */
 		forwardTo(new PeerReplaceDenied(data, "Unknown peer id"), event.from());
 	    }
@@ -102,8 +98,6 @@ public class StatusAppManagerAgent extends AgentNode {
 
     private void updateRecentPeers(String peerId, PeerStatusView status) {
 	recentPeers.put(peerId, status);
-	System.out.println("Recent Peers: "+recentPeers.keySet());
-	System.out.println("new status: "+peerId+" -> "+recentPeers.get(peerId).getStatus());
     }
 
     private Map<String, PeerStatusView> recentPeersSnapshot() {

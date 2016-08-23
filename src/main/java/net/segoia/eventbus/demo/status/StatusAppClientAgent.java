@@ -41,7 +41,6 @@ public class StatusAppClientAgent extends AgentNode {
 	
 	addEventHandler("PEER:STATUS:UPDATED", (c) -> {
 	    Event event = c.getEvent();
-	    System.out.println(getId()+" <- "+event.from()+" : "+event.getParam("status"));
 	});
 	
 	addEventHandler(TickEvent.class, (c) -> {
@@ -51,7 +50,6 @@ public class StatusAppClientAgent extends AgentNode {
     }
 
     protected void start() {
-	System.out.println(getId()+" starting..");
 	timer = new Timer(true);
 	timer.scheduleAtFixedRate(new TimerTask() {
 
@@ -62,7 +60,6 @@ public class StatusAppClientAgent extends AgentNode {
 	    }
 	}, 1, stateRefreshPeriod);
 
-	System.out.println(getId()+" started");
     }
     
     protected void updateState() {
@@ -94,7 +91,6 @@ public class StatusAppClientAgent extends AgentNode {
     @Override
     public void cleanUp() {
 	timer.cancel();
-	System.out.println("Canceling timer");
     }
 
     @Override
