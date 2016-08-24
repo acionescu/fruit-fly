@@ -1,14 +1,18 @@
 package net.segoia.eventbus.demo.status;
 
 import net.segoia.event.eventbus.EventContext;
+import net.segoia.event.eventbus.EventHandle;
 import net.segoia.event.eventbus.EventListener;
+import net.segoia.event.eventbus.util.EBus;
 import net.segoia.eventbus.events.web.util.WebEventsUtil;
-import net.segoia.eventbus.stats.HierarchycalStats;
 import net.segoia.eventbus.stats.HttpRequestStats;
+import net.segoia.eventbus.web.stats.events.SimpleStatsEvent;
 
 public class StatusAppStats implements EventListener{
     private long visitors;
     private long activeUsers;
+    
+    private String NAME="STATUS-APP";
     
     private HttpRequestStats httpStats = new HttpRequestStats();
     
@@ -29,11 +33,14 @@ public class StatusAppStats implements EventListener{
     public void onEvent(EventContext ec) {
 	httpStats.onEvent(ec);
 	
-	HierarchycalStats local = (HierarchycalStats)httpStats.getNestedStats().get("::1");
-	if(local!= null) {
-	    System.out.println(local.getNestedStats());
+//	HierarchycalStats local = (HierarchycalStats)httpStats.getNestedStats().get("::1");
+//	if(local!= null) {
+//	    System.out.println(local.getNestedStats());
+//	}
+	EventHandle eh = EBus.getHandle(new SimpleStatsEvent(NAME, httpStats));
+	if(eh.isAllowed()) {
+	    eh.post();
 	}
-	
     }
     
     
@@ -68,7 +75,5 @@ public class StatusAppStats implements EventListener{
 	// TODO Auto-generated method stub
 	
     }
-    
-    
     
 }

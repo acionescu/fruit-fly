@@ -1,4 +1,4 @@
-package net.segoia.eventbus.web.websocket;
+package net.segoia.eventbus.demo.status;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -11,7 +11,6 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.annotation.WebFilter;
 
-import net.segoia.eventbus.demo.status.StatusApp;
 import net.segoia.eventbus.stats.SimpleStats;
 
 @WebFilter(value="/*")

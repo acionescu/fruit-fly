@@ -1,5 +1,7 @@
 
-#Simple event based, status notification demo
+#This is a status sharing demo app, built with web-events and websockets
+
+Here are the specs:
 
 
 ##The user 

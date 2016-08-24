@@ -38,7 +38,20 @@
 					"className": "net.segoia.util.logging.Log4jLoggerFactory"
 				}
 			},
-			"priority": 0
+			"priority": 0,
+			"condition": {
+				"id" : "logCond",
+				"ctype" : "or",
+				"conditions" : [
+				{
+				"id":"httpEvents",
+				"et":"HTTP::"
+				},{
+				"id":"stats",
+				"et":"STATS:STATS:SIMPLE"
+				}
+				]
+			}
 		}
 	}
 }
