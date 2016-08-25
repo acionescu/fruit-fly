@@ -25,6 +25,13 @@ public class StatusAppManagerAgent extends AgentNode {
     private Set<String> allPeersIds;
     
     @Override
+    protected void nodeConfig() {
+	/* we want to handle all incoming events */
+	config.setGod(true);
+    }
+    
+    
+    @Override
     protected void nodeInit() {
 	recentPeers = new LRUCache<>(StatusApp.maxPartnersPerUser);
 	allPeersIds=new HashSet<>();
@@ -41,6 +48,7 @@ public class StatusAppManagerAgent extends AgentNode {
 	    Event event = c.getEvent();
 	    String peerId = event.from();
 	    updateRecentPeers(peerId, new PeerStatusView(peerId, (String) event.getParam(StatusApp.STATUS)));
+	    
 	});
 
 	/* send init info to new peers */
@@ -114,11 +122,6 @@ public class StatusAppManagerAgent extends AgentNode {
 
     }
 
-    @Override
-    protected void nodeConfig() {
-	// TODO Auto-generated method stub
-
-    }
 
     @Override
     protected void onTerminate() {

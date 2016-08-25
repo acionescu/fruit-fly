@@ -1,6 +1,6 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
-<title>Ephemeral microblogging app - proof of concept</title>
+<title>Fruit-Fly - A status sharing demo app built with web-events and websockets</title>
 
 <script src="js/event-bus.js"></script>
 <script src="js/status-app.js"></script>
@@ -121,7 +121,7 @@ body {
     
 
         $(document).ready(function(){
-            updateTarget("/ebus/ws/eventbus");
+            updateTarget("/fruit-fly/ws/eventbus");
             setConnected(false);
         });
     
@@ -447,6 +447,7 @@ body {
 						<li>Replace the list of peers ( get 5 random peers )</li>
 						<li>Change the id of one of the peers with a known one (
 							possibly the one of a friend )</li>
+						<li>Engage in an ephemeral chat with a follower that they follow back</li>	
 					</ul>
 				</li>
 			</ul>

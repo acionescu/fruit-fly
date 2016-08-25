@@ -17,6 +17,7 @@ Here are the specs:
 	 * update his own status ( max 500 characters )
 	 * replace the list of peers ( get 5 random peers )
 	 * Change the address of one of the peers with a known one ( possibly the one of a friend )
+	 * Engage in an ephemeral chat with a follower that they follow back
  
 ##The server app
 
