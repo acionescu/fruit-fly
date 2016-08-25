@@ -1,6 +1,8 @@
 
 ##This is a status sharing demo app, built with [web-events](https://github.com/acionescu/web-events) and websockets
 
+You can check the demo [here](https://fruit-fly.herokuapp.com/client/statusapp.html)
+
 Here are the specs:
 
 
