@@ -1,5 +1,5 @@
 
-#This is a [status sharing demo app](https://github.com/acionescu/fruit-fly), built with [web-events](https://github.com/acionescu/web-events) and websockets
+##This is a status sharing demo app, built with [web-events](https://github.com/acionescu/web-events) and websockets
 
 Here are the specs:
 
