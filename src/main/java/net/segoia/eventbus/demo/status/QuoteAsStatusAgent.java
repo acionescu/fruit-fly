@@ -32,7 +32,7 @@ public class QuoteAsStatusAgent extends StatusAppClientAgent {
 	super.nodeInit();
 
 	/* update status every 2 minutes */
-	stateRefreshPeriod = 30000;//1000 * 60 * 2;
+	stateRefreshPeriod = 1000 * 60 * 2;
 
 	mainNode = EBus.getMainNode();
 	mainNode.registerPeer(this, new TrueCondition());

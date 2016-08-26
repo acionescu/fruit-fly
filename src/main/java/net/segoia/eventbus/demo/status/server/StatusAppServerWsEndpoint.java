@@ -39,6 +39,8 @@ public class StatusAppServerWsEndpoint extends EventNodeWebsocketServerEndpoint 
     private Event rootEvent;
     
     private SimpleStats stats = new SimpleStats();
+    
+    
 
     @Override
     protected WebsocketServerEventNode buildLocalNode() {
@@ -58,6 +60,9 @@ public class StatusAppServerWsEndpoint extends EventNodeWebsocketServerEndpoint 
      */
     @Override
     protected void setUp(Session session, EndpointConfig config) {
+	connectionCheckPeriod = 35000;
+	maxAllowedInactivity = 30000;
+
 	super.setUp(session, config);
 	/* get the http session reference */
 	this.httpSession = (HttpSession) config.getUserProperties().get(HttpSession.class.getName());

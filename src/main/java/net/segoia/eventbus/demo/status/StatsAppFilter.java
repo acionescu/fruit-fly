@@ -43,9 +43,18 @@ public class StatsAppFilter implements Filter{
 	    throws IOException, ServletException {
 	String remoteAddr = arg0.getRemoteAddr();
 	
+	float activityIndex = StatusApp.stats.getHttpStats().getActivityIndex();
+	System.out.println(activityIndex);
+	if(activityIndex > 35) {
+	    PrintWriter writer = arg1.getWriter();
+		writer.println("Sorry, the app is too busy. Please come back later. Thank you!");
+		writer.close();
+		return;
+	}
+	
 	SimpleStats ipStats = StatusApp.stats.getHttpStats().getNested(remoteAddr, false);
 	if(ipStats != null) {
-	    System.out.println(remoteAddr+" -> "+ipStats.getActivityIndex() );
+	    
 	    if(ipStats.getActivityIndex() > 10) {
 		PrintWriter writer = arg1.getWriter();
 		writer.println("Sorry, the activity from your ip address is too high. Come back later.");
