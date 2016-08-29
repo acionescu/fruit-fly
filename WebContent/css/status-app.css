@@ -1,0 +1,135 @@
+body {
+	font-family: sans-serif;
+	font-size: medium;
+	margin-top: 10px;
+}
+
+.no-scroll{
+	overflow: hidden;
+}
+
+#left-container div {
+	padding-top: 10px;
+}
+
+#left-container {
+	width: 350px;
+	float: left;
+	height: 100%;
+	padding-right: 10px;
+	
+}
+
+#connect-container {
+	float: left;
+	width: 350px;
+	margin-top: 20px;
+	border-top: thin solid;
+	margin-bottom: 50px;
+}
+
+#main-container {
+	height: 100%;
+	overflow: auto;
+}
+
+#data-container {
+
+	margin-left: 360px;
+	height:100%;
+	overflow-x:hidden;
+	overflow-y:auto;
+	padding: 10px;
+	min-height: 100%;
+	border-right: thin solid;
+	border-left: thin solid;
+}
+
+#info-container {
+	margin-left: 360px;
+/* 	height:100%; */
+	min-width:450px;
+	padding: 10px;
+	border-left: thin solid;
+}
+
+.data-div {
+	display: inline-block;
+}
+
+#our-data {
+	padding-top: 20px;
+	padding-bottom: 10px;
+	margin-bottom: 50px;
+	margin-top: 17px;
+	border-top: thin solid;
+}
+
+#peer-id-cont {
+	display: inline-block;
+}
+
+#peer-actions-cont {
+	display: inline-block;
+	float: right;
+}
+
+#peer-status-cont {
+	padding-top: 10px;
+}
+
+#peers-data {
+	margin-top: 20px;
+	padding-bottom: 10px;
+	border-top: thin solid;
+}
+
+.peer-data div {
+	/*  	display: inline-block;  */
+	
+}
+
+.peer-data {
+	padding-bottom: 20px;
+	padding-top: 15px;
+	border-bottom: thin solid;
+}
+
+.peer-left {
+	background-color: #ffaaaa;
+}
+
+.peer-active {
+	background-color: #dddddd;
+	border-radius: 5px;
+	padding: 2px;
+}
+
+#right-container {
+	height: 100%;
+	float: right;
+	padding-left: 10px;
+	padding-top: 10px;
+	width: 365px;
+	overflow-y:auto;
+}
+
+#followers-container {
+	width: 100%;
+	overflow-y:auto;
+}
+
+#followers-data {
+	width: 350px;
+	margin-top: 20px;
+	border-top: thin solid;
+}
+
+.follower div {
+	margin-top: 10px;
+}
+
+#recent-container {
+	margin-top: 20px;
+	border-top: thin solid;
+}

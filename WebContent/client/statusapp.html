@@ -7,168 +7,9 @@
 <script src="js/status-app.js"></script>
 <script src="../tp/jquery-2.1.1.js"></script>
 
-<style type="text/css">
-body {
-	font-family: sans-serif;
-	font-size: medium;
-}
+<link rel="stylesheet" href="../css/status-app.css">
 
-#left-container div {
-	padding-top: 10px;
-}
-
-#left-container {
-	width: 350px;
-	float: left;
-	height: 100%;
-	padding-right: 10px;
-}
-
-#connect-container {
-	float: left;
-	width: 350px;
-	margin-top: 20px;
-	border-top: thin solid;
-	margin-bottom: 50px;
-}
-
-#console-container {
-	float: left;
-	margin-left: 15px;
-	width: 600px;
-}
-
-#console {
-	border: 1px solid #CCCCCC;
-	border-right-color: #999999;
-	border-bottom-color: #999999;
-	height: 500px;
-	overflow-y: scroll;
-	padding: 5px;
-	width: 100%;
-}
-
-#console p {
-	padding: 0;
-	margin: 0;
-}
-
-#main-container {
-	height: 100%;
-}
-
-#data-container {
-	float: left;
-	width: 800px;
-	padding: 10px;
-	min-height: 100%;
-	border-right: thin solid;
-	border-left: thin solid;
-}
-
-#info-container {
-	float: left;
-	width: 800px;
-	padding: 10px;
-	min-height: 100%;
-	border-left: thin solid;
-}
-
-.data-div {
-	display: inline-block;
-}
-
-#our-data {
-	padding-top: 20px;
-	padding-bottom: 10px;
-	margin-bottom: 50px;
-	margin-top: 17px;
-	border-top: thin solid;
-}
-
-#peer-id-cont {
-	display: inline-block;
-}
-
-#peer-actions-cont {
-	display: inline-block;
-	float: right;
-}
-
-#peer-status-cont {
-	padding-top: 10px;
-}
-
-#peers-data {
-	margin-top: 20px;
-	padding-bottom: 10px;
-	border-top: thin solid;
-}
-
-.peer-data div {
-	/*  	display: inline-block;  */
-	
-}
-
-.peer-data {
-	padding-bottom: 20px;
-	padding-top: 15px;
-	border-bottom: thin solid;
-}
-
-.peer-left {
-	background-color: #ffaaaa;
-}
-
-.peer-active {
-	background-color: #dddddd;
-	border-radius: 5px;
-	padding: 2px;
-}
-
-#right-container {
-	height: 100%;
-	float: left;
-	padding-left: 10px;
-	padding-top: 10px;
-}
-
-#followers-container {
-	
-}
-
-#followers-data {
-	width: 350px;
-	margin-top: 20px;
-	border-top: thin solid;
-}
-
-.follower div {
-	margin-top: 10px;
-}
-
-#recent-container {
-	margin-top: 20px;
-	border-top: thin solid;
-	width: 350px;
-}
-</style>
 <script type="application/javascript">
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
 
         $(document).ready(function(){
             updateTarget("/fruit-fly/ws/eventbus");
@@ -193,6 +34,11 @@ body {
             if(!connected){
         	/* stop refreshing recent activity */
         	clearInterval(refreshInterval);
+        	
+        	$("body").removeClass("no-scroll");
+            }
+            else{
+        	$("body").addClass("no-scroll");
             }
         }
         
@@ -268,15 +114,7 @@ body {
         }
 
         function log(message) {
-//             var console = document.getElementById('console');
-//             var p = document.createElement('p');
-//             p.style.wordWrap = 'break-word';
-//             p.appendChild(document.createTextNode(message));
-//             console.appendChild(p);
-//             while (console.childNodes.length > 25) {
-//                 console.removeChild(console.firstChild);
-//             }
-//             console.scrollTop = console.scrollHeight;
+
 	console.log(message);
         }
 
@@ -499,21 +337,6 @@ body {
             }
         });
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 </script>
 </head>
 <body>
@@ -522,7 +345,7 @@ body {
 			Javascript! Websockets rely on Javascript being enabled. Please
 			enable Javascript and reload this page!</h2>
 	</div>
-	<div id="main-container">
+<!-- 	<div id="main-container"> -->
 
 		<div id="left-container">
 			<div>
@@ -555,6 +378,18 @@ body {
 				<label>Followers:</label>
 				<div id="followers-data"></div>
 			</div>
+		</div>
+		
+		<div id="right-container">
+			<div style="height: 20px;">
+				<div style="float: left;">
+					<label>Recent Activity:</label>
+				</div>
+				<div style="float: right;">
+					<button onclick="refreshRecentActivity()">Refresh</button>
+				</div>
+			</div>
+			<div id="recent-container"></div>
 		</div>
 
 		<div id="info-container">
@@ -676,18 +511,8 @@ body {
 
 			</div>
 		</div>
-		<div id="right-container">
-			<div style="height: 20px;">
-				<div style="float: left;">
-					<label>Recent Activity:</label>
-				</div>
-				<div style="float: right;">
-					<button onclick="refreshRecentActivity()">Refresh</button>
-				</div>
-			</div>
-			<div id="recent-container"></div>
-		</div>
+		
 
-	</div>
+<!-- 	</div> -->
 </body>
 </html>
