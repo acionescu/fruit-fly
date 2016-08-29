@@ -160,7 +160,7 @@
         
         
         function replacePeer(oldPeerId,newPeerId){
-            var dataCont = document.getElementById(oldPeerId);
+            var dataCont = $("#peers-data").find("#"+oldPeerId);
             $(dataCont).find("#new-peer-id").remove();
             $(dataCont).find("#peer-id-cont").text(newPeerId).addClass("peer-active");
             $(dataCont).find("#peer-status-cont").text("-- waiting for a new status update");
@@ -174,7 +174,7 @@
         }
         
         function rollbackPeerReplace(peerId){
-            var dataCont = document.getElementById(peerId);
+            var dataCont = $("#peers-data").find("#"+peerId);
             $(dataCont).find("#new-peer-id").remove();
             $(dataCont).find("#peer-id-cont").text(peerId).addClass("peer-active");
             
