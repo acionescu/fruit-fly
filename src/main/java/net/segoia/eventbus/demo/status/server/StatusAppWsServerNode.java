@@ -30,7 +30,9 @@ import net.segoia.event.eventbus.EventTracker;
 import net.segoia.event.eventbus.constants.EventParams;
 import net.segoia.event.eventbus.constants.Events;
 import net.segoia.event.eventbus.peers.events.PeerRegisterRequestEvent;
+import net.segoia.event.eventbus.peers.events.PeerRegisteredEvent;
 import net.segoia.event.eventbus.peers.events.PeerRequestUnregisterEvent;
+import net.segoia.event.eventbus.peers.events.PeerUnregisteredEvent;
 import net.segoia.event.eventbus.util.EBus;
 import net.segoia.eventbus.demo.status.PeerStatusView;
 import net.segoia.eventbus.demo.status.StatusApp;
@@ -39,6 +41,7 @@ import net.segoia.eventbus.demo.status.events.PeerReplaceAccepted;
 import net.segoia.eventbus.demo.status.events.PeerReplaceData;
 import net.segoia.eventbus.demo.status.events.PeerReplaceDenied;
 import net.segoia.eventbus.demo.status.events.PeersViewUpdateEvent;
+import net.segoia.eventbus.demo.status.events.RecentActivityEvent;
 import net.segoia.eventbus.demo.status.events.ReplacePeerRequestEvent;
 import net.segoia.eventbus.demo.status.events.StatusAppInitEvent;
 import net.segoia.eventbus.demo.status.events.StatusErrorEvent;
@@ -116,6 +119,12 @@ public class StatusAppWsServerNode extends WebsocketServerEventNode {
 	    registerToPeer(newPeerId);
 
 	});
+	
+	addEventHandler(RecentActivityEvent.class, (c)->{
+	    if(getId().equals(c.event().to())) {
+		super.handleServerEvent(c.event());
+	    }
+	});
 
 	// /* when we unregister from a peer */
 	// addEventHandler(PeerUnregisteredEvent.class, (c) -> {
@@ -148,13 +157,34 @@ public class StatusAppWsServerNode extends WebsocketServerEventNode {
      * @see net.segoia.event.eventbus.peers.EventNode#onPeerRegistered(java.lang.String)
      */
     @Override
-    protected void onPeerRegistered(String peerId) {
-	super.onPeerRegistered(peerId);
+    protected void onPeerRegistered(PeerRegisteredEvent event) {
+	super.onPeerRegistered(event);
+	String peerId = event.getData().getPeerId();
+	
+	model.addFollower(peerId);
 
 	/* sent a status update to newly registered peers */
 
 	forwardTo(getStatusUpdatedEvent(), peerId);
+	
+	/* notify the client that a peer registered */
+	super.handleServerEvent(event);
 
+    }
+    
+
+    /* (non-Javadoc)
+     * @see net.segoia.event.eventbus.peers.EventNode#onPeerUnregistered(net.segoia.event.eventbus.peers.events.PeerUnregisteredEvent)
+     */
+    @Override
+    protected void onPeerUnregistered(PeerUnregisteredEvent event) {
+	super.onPeerUnregistered(event);
+	
+	String peerId = event.getData().getPeerId();
+	model.removeFollower(peerId);
+	
+	/* notify the client that a peer unregistered */
+	super.handleServerEvent(event);
     }
 
     private Event getStatusUpdatedEvent() {

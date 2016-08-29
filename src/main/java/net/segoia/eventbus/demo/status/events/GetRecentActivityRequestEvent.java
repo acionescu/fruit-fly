@@ -16,22 +16,14 @@
  */
 package net.segoia.eventbus.demo.status.events;
 
-import java.util.Map;
-
 import net.segoia.event.eventbus.CustomEvent;
 import net.segoia.event.eventbus.EventType;
-import net.segoia.eventbus.demo.status.PeerStatusView;
 
-@EventType("STATUS-APP:PEERS:REFRESH")
-public class PeersViewUpdateEvent extends CustomEvent<PeersViewData> {
-    public PeersViewUpdateEvent(Map<String, PeerStatusView> peersData) {
-	this();
-	this.data= new PeersViewData(peersData);
+@EventType(value="STATUS-APP:REQUEST:GET-RECENT-ACTIVITY")
+public class GetRecentActivityRequestEvent extends CustomEvent<Object>{
+
+    public GetRecentActivityRequestEvent() {
+	super(GetRecentActivityRequestEvent.class);
     }
-
-    public PeersViewUpdateEvent() {
-	super(PeersViewUpdateEvent.class);
-    }
-
 
 }

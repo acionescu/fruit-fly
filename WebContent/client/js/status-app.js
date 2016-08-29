@@ -30,3 +30,9 @@ StatusAppClient.prototype.requestPeerReplace = function(oldPeerId, newPeerId){
 	}
     });
 }
+
+StatusAppClient.prototype.getRecentActivity = function(){
+    this.send({
+	et : "STATUS-APP:REQUEST:GET-RECENT-ACTIVITY"
+    });
+}

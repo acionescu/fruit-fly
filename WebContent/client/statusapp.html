@@ -1,30 +1,35 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
-<title>Fruit-Fly - A status sharing demo app built with web-events and websockets</title>
+<title>Fruit-Fly - An anonymous status sharing demo app built
+	with web-events and websockets</title>
 
 <script src="js/event-bus.js"></script>
 <script src="js/status-app.js"></script>
 <script src="../tp/jquery-2.1.1.js"></script>
 
-<script src="../tp/jquery-ui.js"></script>
-
-<link rel="stylesheet" href="../tp/jquery-ui.css">
-
-
 <style type="text/css">
-
 body {
-	font-family: cursive;
+	font-family: sans-serif;
 	font-size: medium;
+}
+
+#left-container div {
+	padding-top: 10px;
+}
+
+#left-container {
+	width: 350px;
+	float: left;
+	height: 100%;
+	padding-right: 10px;
 }
 
 #connect-container {
 	float: left;
-	width: 400px
-}
-
-#connect-container div {
-	padding: 5px;
+	width: 350px;
+	margin-top: 20px;
+	border-top: thin solid;
+	margin-bottom: 50px;
 }
 
 #console-container {
@@ -49,21 +54,24 @@ body {
 }
 
 #main-container {
-	height: auto;
+	height: 100%;
 }
 
 #data-container {
 	float: left;
-	height: 500px;
 	width: 800px;
 	padding: 10px;
+	min-height: 100%;
+	border-right: thin solid;
+	border-left: thin solid;
 }
 
 #info-container {
 	float: left;
-	height: 500px;
 	width: 800px;
 	padding: 10px;
+	min-height: 100%;
+	border-left: thin solid;
 }
 
 .data-div {
@@ -74,7 +82,7 @@ body {
 	padding-top: 20px;
 	padding-bottom: 10px;
 	margin-bottom: 50px;
-	margin-top: 20px;
+	margin-top: 17px;
 	border-top: thin solid;
 }
 
@@ -114,19 +122,63 @@ body {
 
 .peer-active {
 	background-color: #dddddd;
+	border-radius: 5px;
+	padding: 2px;
+}
+
+#right-container {
+	height: 100%;
+	float: left;
+	padding-left: 10px;
+	padding-top: 10px;
+}
+
+#followers-container {
+	
+}
+
+#followers-data {
+	width: 350px;
+	margin-top: 20px;
+	border-top: thin solid;
+}
+
+.follower div {
+	margin-top: 10px;
+}
+
+#recent-container {
+	margin-top: 20px;
+	border-top: thin solid;
+	width: 350px;
 }
 </style>
 <script type="application/javascript">
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     
     
 
         $(document).ready(function(){
             updateTarget("/fruit-fly/ws/eventbus");
             setConnected(false);
+            connect();
         });
     
     
         var wse = null;
+        var refreshInterval;
 
         function setConnected(connected) {
             document.getElementById('connect').disabled = connected;
@@ -134,8 +186,14 @@ body {
             document.getElementById('echo').disabled = !connected;
             document.getElementById('refresh-peers').disabled = !connected;
             setVisible('data-container', connected);
+            setVisible('right-container',connected);
+            setVisible('followers-container',connected);
             setVisible('info-container', !connected);
             
+            if(!connected){
+        	/* stop refreshing recent activity */
+        	clearInterval(refreshInterval);
+            }
         }
         
         function setVisible(id, visible){
@@ -178,6 +236,10 @@ body {
         function disconnect() {
             wse.close();
             setConnected(false);
+        }
+        
+        function refreshRecentActivity(){
+            wse.getRecentActivity();
         }
 
         function echo() {
@@ -315,7 +377,7 @@ body {
         }
         
         function setPeerLeft(peerId){
-            var dataCont = document.getElementById(peerId);
+            var dataCont = $("#peers-data").find("#"+peerId);
             if(dataCont){
         	var idCont = $(dataCont).find("#peer-id-cont");
         	idCont.removeClass("peer-active").addClass("peer-left");
@@ -324,9 +386,9 @@ body {
         }
         
         function updatePeerStatus(peerId, status){
-            var dataCont = document.getElementById(peerId);
+            var dataCont = $("#peers-data").find("#"+peerId);
             if(dataCont){
-        	$(dataCont).find("#peer-status-cont").text(status);
+        	dataCont.find("#peer-status-cont").text(status);
             }
         }
         
@@ -351,15 +413,50 @@ body {
         	elem.removeChild(elem.firstChild);
         	}
         }
+        
+        function addFollower(peerId){
+            var fd = $("#followers-data");
+            fd.append($("<div>").attr("id",peerId).addClass("follower").text(peerId));
+        }
+        
+        function removeFollower(peerId){
+            var pc = $("#followers-data").find(("#"+peerId));
+            if(pc){
+        	pc.remove();
+            }
+        }
+        
+        function updateRecentActivity(peersData){
+            var ourDataCont = document.getElementById('recent-container');
+            clearElement(ourDataCont);
+            for(var peerId  in peersData){
+        	var pd = peersData[peerId];
+        	var pcont = createPeerCont(peerId);
+        	/* we have now actions for recent activity */
+        	$(pcont).find("#peer-actions-cont").empty();
+        	
+        	$(pcont).find("#peer-id-cont").text(peerId).addClass("peer-active");
+        	$(pcont).find("#peer-status-cont").text(pd.status);
+        	
+        	$(pcont).prependTo(ourDataCont);
+        	
+            };
+        }
+        
 
         var appState = new WsState("APP_STATE",{
             /* when the server sends us the init data */
             "STATUS-APP:PEER:INIT" : function(ec){
+        	$("#followers-data").empty();
         	
         	var model = ec.event.data.model;
         	setOurId(model.clientId);
         	setOurStatus(model.status);
         	setPeerData(model.peersData);
+        	
+        	/* refresh recent activity and start an interval to autorefresh every 30 s */
+        	refreshRecentActivity();
+        	refreshInterval = setInterval(refreshRecentActivity,30000);
             },
             
             "PEER:STATUS:UPDATED" : function(ec){
@@ -387,8 +484,33 @@ body {
             "STATUS-APP:STATUS:ERROR" : function(ec){
         	setOurStatus(ec.event.data.currentStatus);
         	alert(ec.event.data.reason);
+            },
+            
+            "PEER:RESPONSE:REGISTERED" : function(ec){
+        	addFollower(ec.event.data.peerId);
+            },
+            
+            "PEER:RESPONSE:UNREGISTERED" : function(ec){
+        	removeFollower(ec.event.data.peerId);
+            },
+            
+            "STATUS-APP:RESPONSE:RECENT-ACTIVITY" : function(ec){
+        	updateRecentActivity(ec.event.data.peersData);
             }
         });
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -401,63 +523,112 @@ body {
 			enable Javascript and reload this page!</h2>
 	</div>
 	<div id="main-container">
-		<div id="connect-container">
-			<div></div>
+
+		<div id="left-container">
 			<div>
-				<input id="target" type="text" size="40" style="width: 350px"
-					hidden="true" />
+				<label for="connect-container">Controls:</label>
 			</div>
-			<div>
-				<button id="connect" onclick="connect();">Connect</button>
-				<button id="disconnect" disabled="disabled" onclick="disconnect();">Disconnect</button>
-				<button id="refresh-peers" disabled="disabled"
-					onclick="refreshPeers();">Replace Peers</button>
+			<div id="connect-container">
+
+				<div>
+					<input id="target" type="text" size="40" style="width: 330px"
+						hidden="true" />
+					<button id="connect" onclick="connect();">Connect</button>
+					<button id="disconnect" disabled="disabled" onclick="disconnect();">Disconnect</button>
+					<button id="refresh-peers" disabled="disabled"
+						onclick="refreshPeers();">Replace Peers</button>
+				</div>
+				<div id="infoCont" style="display: none;"></div>
+				<div>
+					<label>Share your status with the world:</label>
+				</div>
+				<div>
+					<textarea id="message" style="width: 330px; height: 100px">Here is a message!</textarea>
+				</div>
+				<div>
+					<button id="echo" onclick="echo();" disabled="disabled">Update
+						Status</button>
+				</div>
 			</div>
-			<div id="infoCont" style="display: none;"></div>
-			<div>
-				<textarea id="message" style="width: 330px; height: 60px">Here is a message!</textarea>
-			</div>
-			<div>
-				<button id="echo" onclick="echo();" disabled="disabled">Update
-					Status</button>
+
+			<div id="followers-container">
+				<label>Followers:</label>
+				<div id="followers-data"></div>
 			</div>
 		</div>
-		
+
 		<div id="info-container">
-			<p><h2>Welcome</h2></p>
-			<p style="font-size: large;">This is a status sharing demo app, built with web-events and websockets.</p>
-			Here are the specs:
-			
-			<p><h3>The user:</h3>
-			
+			<p>
+			<h2>Welcome</h2>
+			</p>
+			<p style="font-size: large;">
+				This is a <a href="https://github.com/acionescu/fruit-fly">an
+					anonymous status sharing demo app</a>, built with <a
+					href="https://github.com/acionescu/web-events">web-events</a> and
+				websockets.
+			</p>
+
+			<p>
+				&lt;-- Click <b>Connect</b> to start the app
+			</p>
+
+			<p>
+				Currently, this uses a single server to route the messages between
+				peers, but the goal is for anyone to be able to host its own server
+				that will act as a digital broker between their data and the peers.
+				<br>
+				<br> So instead of talking with a central server, each client
+				will talk with its own sever instance which in turn will talk with
+				the server instances of its peers. <br>
+				<br> The vision is to be able to share any type of data in this
+				manner, not just text messages. <br>
+				<br> This is a model that can pave the way for more private
+				social networking, where the ones interested, can actually have
+				complete control over their data, while still being able to share it
+				with whomever they please, without the need to trust a third party.
+
+
+
+			</p>
+			For now, here are the specs for the current proof of concept:
+			<p>
+			<h3>The user:</h3>
+
 			<ul>
-				<li>User loads the page</li>
-				<li>Hits <b>Connect</b> button</li>
+				<li>Loads the page, and will be automatically connected</li>
+
 				<li>Sees a widget with:
 					<ul>
-						<li>His defaults status (e.g. "Hi, I'm visitor xyz")</li>
-						<li>His own unique id</li>
+						<li>The unique id assigned for this connection</li>
+						<li>A default status (e.g. "Hi, I'm visitor xyz") that can be
+							changed</li>
 						<li>5 random peers and their statuses</li>
+						<li>The ids of the followers</li>
+						<li>The last 5 most recent updates, autorefreshing every 30
+							seconds ( can be refreshed manually as well )</li>
 					</ul>
 				</li>
 				<li>Can:
 					<ul>
 
-						<li>Update his own status ( max 500 characters )</li>
+						<li>Update the status ( max 500 characters )</li>
 						<li>Replace the list of peers ( get 5 random peers )</li>
 						<li>Change the id of one of the peers with a known one (
 							possibly the one of a friend )</li>
-						<li>Engage in an ephemeral chat with a follower that they follow back</li>	
+						<li>Engage in an ephemeral chat with a follower that he/she
+							follows back</li>
+						<li>Get the last 5 most recent updates from all the users
+							connected</li>
 					</ul>
 				</li>
 			</ul>
 			</p>
-			<p><h3>The server:</h3>
-			
+			<p>
+			<h3>The server:</h3>
+
 			<ul>
-				
-				<li>
-				Provides:
+
+				<li>Provides:
 					<ul>
 						<li>5 default agents ( bots ) that set as status an
 							interesting quote. The agents will update their status every 2
@@ -475,30 +646,26 @@ body {
 			</p>
 
 		</div>
-		
+
 		<div id="data-container">
 			<div>
-				<label for="our-data">My data: </label>
+				<label for="our-id">Connected as:</label>
+				<div id="our-id" class="data-div peer-active"></div>
 				<div id="our-data">
 
 					<div>
-						<label for="our-id">Id:  </label>
-						<div id="our-id" class="data-div"></div>
-					</div>
-					<div>
-						<label for="our-status">Status:  </label>
+						<label for="our-status">Status: </label>
 						<div id="our-status" class="data-div"></div>
 					</div>
 				</div>
 			</div>
 			<div>
-				<label for="peers-data">Peers data:</label>
+				<label for="peers-data">Following:</label>
 				<div id="peers-data"></div>
 			</div>
 			<div id="templates" hidden="true">
 				<div id="peer-data-temp" class="peer-data">
-					<div id="peer-id-cont">peer id</div>
-					:
+					<div id="peer-id-cont"></div>:
 					<div id="peer-actions-cont">
 						<button id="replace-button">Replace</button>
 						<button id="update-button" style="display: none;">Update</button>
@@ -509,6 +676,18 @@ body {
 
 			</div>
 		</div>
+		<div id="right-container">
+			<div style="height: 20px;">
+				<div style="float: left;">
+					<label>Recent Activity:</label>
+				</div>
+				<div style="float: right;">
+					<button onclick="refreshRecentActivity()">Refresh</button>
+				</div>
+			</div>
+			<div id="recent-container"></div>
+		</div>
+
 	</div>
 </body>
 </html>

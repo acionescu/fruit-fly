@@ -16,13 +16,16 @@
  */
 package net.segoia.eventbus.demo.status;
 
+import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Set;
 
 public class StatusAppModel {
 
     private String clientId;
     private String status;
     private Map<String, PeerStatusView> peersData;
+    private Set<String> followers= new LinkedHashSet<>();
 
     public StatusAppModel(String clientId, String status, Map<String, PeerStatusView> peersData) {
 	super();
@@ -86,6 +89,20 @@ public class StatusAppModel {
 	peersData.put(peerId, peerView);
     }
     
+    public void addFollower(String peerId) {
+	followers.add(peerId);
+    }
+    
+    public void removeFollower(String peerId) {
+	followers.remove(peerId);
+    }
+
+    /**
+     * @return the followers
+     */
+    public Set<String> getFollowers() {
+        return followers;
+    }
 
     /* (non-Javadoc)
      * @see java.lang.Object#toString()
@@ -99,9 +116,13 @@ public class StatusAppModel {
 	if (status != null)
 	    builder.append("status=").append(status).append(", ");
 	if (peersData != null)
-	    builder.append("peersData=").append(peersData);
+	    builder.append("peersData=").append(peersData).append(", ");
+	if (followers != null)
+	    builder.append("followers=").append(followers);
 	builder.append("]");
 	return builder.toString();
     }
+
+    
     
 }

@@ -25,10 +25,12 @@ import net.segoia.event.eventbus.Event;
 import net.segoia.event.eventbus.constants.EventParams;
 import net.segoia.event.eventbus.peers.AgentNode;
 import net.segoia.event.eventbus.util.EBus;
+import net.segoia.eventbus.demo.status.events.GetRecentActivityRequestEvent;
 import net.segoia.eventbus.demo.status.events.PeerReplaceAccepted;
 import net.segoia.eventbus.demo.status.events.PeerReplaceData;
 import net.segoia.eventbus.demo.status.events.PeerReplaceDenied;
 import net.segoia.eventbus.demo.status.events.PeersViewUpdateEvent;
+import net.segoia.eventbus.demo.status.events.RecentActivityEvent;
 import net.segoia.eventbus.demo.status.events.RefreshPeersRequestEvent;
 import net.segoia.eventbus.demo.status.events.ReplacePeerRequestEvent;
 import net.segoia.eventbus.demo.status.events.StatusAppInitEvent;
@@ -101,6 +103,14 @@ public class StatusAppManagerAgent extends AgentNode {
 
 	    forwardTo(pvue, c.getEvent().from());
 
+	});
+	
+	addEventHandler(GetRecentActivityRequestEvent.class, (c)->{
+	    Map<String, PeerStatusView> peersCopy = recentPeersSnapshot();
+
+	    RecentActivityEvent rae = new RecentActivityEvent(peersCopy);
+
+	    forwardTo(rae, c.getEvent().from());
 	});
 	
 	addEventHandler(ReplacePeerRequestEvent.class, (c)->{
