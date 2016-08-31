@@ -16,9 +16,12 @@
  */
 package net.segoia.eventbus.demo.status;
 
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
+
+import net.segoia.eventbus.demo.chat.Chat;
 
 public class StatusAppModel {
 
@@ -26,6 +29,10 @@ public class StatusAppModel {
     private String status;
     private Map<String, PeerStatusView> peersData;
     private Set<String> followers= new LinkedHashSet<>();
+    /**
+     * The chats in which this peer is engaged
+     */
+    private Map<String,Chat> chats= new HashMap<>();
 
     public StatusAppModel(String clientId, String status, Map<String, PeerStatusView> peersData) {
 	super();
@@ -102,6 +109,18 @@ public class StatusAppModel {
      */
     public Set<String> getFollowers() {
         return followers;
+    }
+    
+    public void addChat(Chat chat) {
+	chats.put(chat.getChatKey(), chat);
+    }
+    
+    public void removeChat(String chatKey) {
+	chats.remove(chatKey);
+    }
+    
+    public Chat getChat(String chatKey) {
+	return chats.get(chatKey);
     }
 
     /* (non-Javadoc)

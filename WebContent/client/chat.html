@@ -1,0 +1,142 @@
+<html>
+<head>
+
+<style type="text/css">
+body {
+	font-family: sans-serif;
+}
+
+#main-container {
+	width: 100%;
+	height: 100%;
+}
+
+#connect-container {
+	/* 	width: 300px; */
+	height: 200px;
+	position: absolute;
+	text-align: center;
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	margin: auto;
+}
+</style>
+
+<script type="text/javascript">
+    document.addEventListener("DOMContentLoaded", function() {
+	// Remove elements with "noscript" class - <noscript> is not allowed in XHTML
+	var noscripts = document.getElementsByClassName("noscript");
+	for (var i = 0; i < noscripts.length; i++) {
+	    noscripts[i].parentNode.removeChild(noscripts[i]);
+	}
+    }, false);
+
+    $(document).ready(function() {
+	updateTarget("/fruit-fly/ws/eventbus");
+	setConnected(false);
+    });
+
+    var wse = null;
+    
+    function updateTarget(target) {
+        if (window.location.protocol == 'http:') {
+            document.getElementById('target').value = 'ws://' + window.location.host + target;
+        } else {
+            document.getElementById('target').value = 'wss://' + window.location.host + target;
+        }
+    }
+
+    function setConnected(connected) {
+	document.getElementById('connect').disabled = connected;
+	document.getElementById('disconnect').disabled = !connected;
+	document.getElementById('echo').disabled = !connected;
+	document.getElementById('refresh-peers').disabled = !connected;
+	setVisible('data-container', connected);
+	setVisible('right-container', connected);
+	setVisible('followers-container', connected);
+	setVisible('info-container', !connected);
+
+	if (!connected) {
+	    /* stop refreshing recent activity */
+	    clearInterval(refreshInterval);
+
+	    $("body").removeClass("no-scroll");
+	} else {
+	    $("body").addClass("no-scroll");
+	}
+    }
+
+    function setVisible(id, visible) {
+	var elem = document.getElementById(id);
+	if (visible) {
+	    $(elem).show();
+	} else {
+	    $(elem).hide();
+	}
+    }
+
+    function connect() {
+	var target = document.getElementById('target').value;
+	if (target == '') {
+	    alert('Please select server side connection implementation.');
+	    return;
+	}
+	var wshandler = {
+	    onopen : function() {
+		setConnected(true);
+		$("#infoCont").hide();
+		log('Info: WebSocket connection opened.');
+	    },
+	    onmessage : function(event) {
+		//	                log('Received: ' + event.data);
+	    },
+	    onclose : function(event) {
+		setConnected(false);
+		var msg = 'WebSocket connection closed, Code: '
+			+ event.code
+			+ (event.reason == "" ? "" : ", Reason: "
+				+ event.reason);
+
+		$("#infoCont").text(msg).show();
+	    }
+	};
+
+	wse = new StatusAppClient(target, true, wshandler, appState);
+    }
+
+    function disconnect() {
+	wse.close();
+	setConnected(false);
+    }
+</script>
+
+</head>
+<body>
+
+	<div class="noscript">
+		<h2 style="color: #ff0000">Seems your browser doesn't support
+			Javascript! Websockets rely on Javascript being enabled. Please
+			enable Javascript and reload this page!</h2>
+	</div>
+	<div id="infoCont" style="display: none;"></div>
+	<div id="main-container">
+
+		<div id="connect-container">
+			<h3>
+				<label>Enter chat key:</label>
+			</h3>
+			<div>
+				<input id="target" type="text" size="40" style="width: 330px"
+					hidden="true" /> <input type="text" size="50">
+				<button onclick="connect()">Connect</button>
+			</div>
+
+		</div>
+	</div>
+
+</body>
+
+</html>

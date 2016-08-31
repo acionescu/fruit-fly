@@ -26,7 +26,9 @@ import net.segoia.event.conditions.OrCondition;
 import net.segoia.event.conditions.StrictEventMatchCondition;
 import net.segoia.event.eventbus.Event;
 import net.segoia.event.eventbus.EventContext;
+import net.segoia.event.eventbus.EventHandle;
 import net.segoia.event.eventbus.EventTracker;
+import net.segoia.event.eventbus.builders.DefaultComponentEventBuilder;
 import net.segoia.event.eventbus.constants.EventParams;
 import net.segoia.event.eventbus.constants.Events;
 import net.segoia.event.eventbus.peers.events.PeerRegisterRequestEvent;
@@ -34,6 +36,14 @@ import net.segoia.event.eventbus.peers.events.PeerRegisteredEvent;
 import net.segoia.event.eventbus.peers.events.PeerRequestUnregisterEvent;
 import net.segoia.event.eventbus.peers.events.PeerUnregisteredEvent;
 import net.segoia.event.eventbus.util.EBus;
+import net.segoia.eventbus.demo.chat.Chat;
+import net.segoia.eventbus.demo.chat.events.ChatInitData;
+import net.segoia.eventbus.demo.chat.events.ChatInitEvent;
+import net.segoia.eventbus.demo.chat.events.ChatJoinedEvent;
+import net.segoia.eventbus.demo.chat.events.ChatLeftEvent;
+import net.segoia.eventbus.demo.chat.events.ChatMessage;
+import net.segoia.eventbus.demo.chat.events.ChatMessageEvent;
+import net.segoia.eventbus.demo.chat.events.ChatPeerData;
 import net.segoia.eventbus.demo.status.PeerStatusView;
 import net.segoia.eventbus.demo.status.StatusApp;
 import net.segoia.eventbus.demo.status.StatusAppModel;
@@ -49,6 +59,8 @@ import net.segoia.eventbus.web.websocket.server.EventNodeWebsocketServerEndpoint
 import net.segoia.eventbus.web.websocket.server.WebsocketServerEventNode;
 
 public class StatusAppWsServerNode extends WebsocketServerEventNode {
+    private static DefaultComponentEventBuilder chatEventBuilder = EBus.getComponentEventBuilder("CHAT");
+
     private static Condition acceptedClientEvents = new OrCondition(LooseEventMatchCondition.build("PEER", null),
 	    LooseEventMatchCondition.build("STATUS-APP", null));
     private static Condition acceptedServerEvents = new AndCondition(
@@ -119,36 +131,93 @@ public class StatusAppWsServerNode extends WebsocketServerEventNode {
 	    registerToPeer(newPeerId);
 
 	});
-	
-	addEventHandler(RecentActivityEvent.class, (c)->{
-	    if(getId().equals(c.event().to())) {
+
+	addEventHandler(RecentActivityEvent.class, (c) -> {
+	    if (getId().equals(c.event().to())) {
 		super.handleServerEvent(c.event());
 	    }
 	});
 
-	// /* when we unregister from a peer */
-	// addEventHandler(PeerUnregisteredEvent.class, (c) -> {
-	// PeerUnregisteredEvent event = c.event();
-	//
-	// /* handle events targeting us */
-	// if (!getId().equals(event.getData().getPeerId())) {
-	// return;
-	// }
-	//
-	// model.removePeer(event.from());
-	// });
+	/* when we unregister from a peer */
+	addEventHandler(PeerUnregisteredEvent.class, (c) -> {
+	    PeerUnregisteredEvent event = c.event();
 
-	// addEventHandler(PeerRegisteredEvent.class, (c) -> {
-	// PeerRegisteredEvent event = c.event();
-	//
-	// /* handle only events that targets us */
-	// if (!getId().equals(event.getData().getPeerId())) {
-	// return;
-	// }
-	// String from = event.from();
-	// model.addPeer(from, new PeerStatusView(from, ""));
-	// });
+	    /* handle events targeting us */
+	    if (!getId().equals(event.getData().getPeerId())) {
+		return;
+	    }
 
+	    model.removePeer(event.from());
+	});
+
+	addEventHandler(PeerRegisteredEvent.class, (c) -> {
+	    PeerRegisteredEvent event = c.event();
+
+	    /* handle only events that targets us */
+	    if (!getId().equals(event.getData().getPeerId())) {
+		return;
+	    }
+	    String from = event.from();
+	    model.addPeer(from, new PeerStatusView(from, ""));
+	});
+
+	/* chat handling events */
+
+	addEventHandler(ChatInitEvent.class, (c) -> {
+	    ChatInitEvent event = c.event();
+	    ChatInitData chatData = event.getData();
+	    String chatKey = chatData.getChatKey();
+
+	    Chat chat = model.getChat(chatKey);
+	    if (chat == null) {
+		/*
+		 * if this is null, we're receiving a chat init event without having sent a chat join request before.
+		 * Very bad. Shouldn't happen. Raise an error.
+		 */
+		EventHandle eh = chatEventBuilder.alert().name("INIT_WITHOUT_REQUEST").getHandle();
+		if (eh.isAllowed()) {
+		    eh.addParam("peerId", getId());
+		    eh.addParam("chatKey", chatKey);
+		    eh.addParam("from", event.from());
+		    eh.post();
+		}
+		/* don't let the event be passed to the client */
+		event.setHandled();
+		return;
+	    }
+	    
+	    chat.setParticipants(chatData.getParticipants());
+	});
+	
+	addEventHandler(ChatJoinedEvent.class,(c)->{
+	    ChatJoinedEvent event = c.event();
+	    ChatPeerData data = event.getData();
+	    
+	    Chat chat = model.getChat(data.getChatKey());
+	    if(chat != null) {
+		chat.addParticipant(data.getPeerId());
+	    }
+	});
+	
+	addEventHandler(ChatLeftEvent.class, (c)->{
+	    ChatLeftEvent event = c.event();
+	    ChatPeerData data = event.getData();
+	    
+	    Chat chat = model.getChat(data.getChatKey());
+	    if(chat != null) {
+		chat.removeParticipant(data.getPeerId());
+	    }
+	});
+	
+	addEventHandler(ChatMessageEvent.class, (c)->{
+	    ChatMessageEvent event = c.event();
+	    ChatMessage data = event.getData();
+	    if(model.getChat(data.getChatKey()) == null ) {
+		/* if we didn't join the chat, don't forward this message to the client */
+		event.setHandled();
+		return;
+	    }
+	});
     }
 
     /*
@@ -160,29 +229,31 @@ public class StatusAppWsServerNode extends WebsocketServerEventNode {
     protected void onPeerRegistered(PeerRegisteredEvent event) {
 	super.onPeerRegistered(event);
 	String peerId = event.getData().getPeerId();
-	
+
 	model.addFollower(peerId);
 
 	/* sent a status update to newly registered peers */
 
 	forwardTo(getStatusUpdatedEvent(), peerId);
-	
+
 	/* notify the client that a peer registered */
 	super.handleServerEvent(event);
 
     }
-    
 
-    /* (non-Javadoc)
-     * @see net.segoia.event.eventbus.peers.EventNode#onPeerUnregistered(net.segoia.event.eventbus.peers.events.PeerUnregisteredEvent)
+    /*
+     * (non-Javadoc)
+     * 
+     * @see net.segoia.event.eventbus.peers.EventNode#onPeerUnregistered(net.segoia.event.eventbus.peers.events.
+     * PeerUnregisteredEvent)
      */
     @Override
     protected void onPeerUnregistered(PeerUnregisteredEvent event) {
 	super.onPeerUnregistered(event);
-	
+
 	String peerId = event.getData().getPeerId();
 	model.removeFollower(peerId);
-	
+
 	/* notify the client that a peer unregistered */
 	super.handleServerEvent(event);
     }
@@ -246,12 +317,12 @@ public class StatusAppWsServerNode extends WebsocketServerEventNode {
 
 	    /* don't let status be null or empty */
 	    if (status == null || status.isEmpty()) {
-		super.handleServerEvent(new StatusErrorEvent("The status can't be null or empty",model.getStatus()));
+		super.handleServerEvent(new StatusErrorEvent("The status can't be null or empty", model.getStatus()));
 	    }
 	    /* don't let status exceed the max length */
 	    else if (status.length() > StatusApp.maxStatusLength) {
-		super.handleServerEvent(
-			new StatusErrorEvent("The status can't exceed " + StatusApp.maxStatusLength + " characters.",model.getStatus()));
+		super.handleServerEvent(new StatusErrorEvent(
+			"The status can't exceed " + StatusApp.maxStatusLength + " characters.", model.getStatus()));
 	    } else {
 		model.setStatus(status);
 		/* forward the status to the registered peers */
@@ -300,9 +371,20 @@ public class StatusAppWsServerNode extends WebsocketServerEventNode {
 
 	});
 	
+	/* chat */
+	
+	wsEventsBus.addEventHandler(ChatMessageEvent.class, (c)->{
+	  ChatMessageEvent event = c.event();
+	ChatMessage data = event.getData();
+	  if(model.getChat(data.getChatKey()) == null) {
+	      /* if we don't take part in the chat don't forward the message */
+	      event.setHandled();
+	      return;
+	  }
+	});
 	
 	
-	
+
 	/* register for all events that are not requests */
 	EBus.getMainNode().registerPeer(this, acceptedServerEvents);
 
@@ -321,7 +403,7 @@ public class StatusAppWsServerNode extends WebsocketServerEventNode {
      */
     @Override
     protected EventTracker handleServerEvent(Event event) {
-	if (passToWsClientCond.test(new EventContext(event, null))) {
+	if (!event.isHandled() && passToWsClientCond.test(new EventContext(event, null))) {
 	    return super.handleServerEvent(event);
 	}
 	return null;
@@ -334,7 +416,7 @@ public class StatusAppWsServerNode extends WebsocketServerEventNode {
 	/* if the event is not handled and accepted do the default action */
 	if (!ec.event().isHandled() && acceptedClientEvents.test(ec)) {
 	    super.handleWsEvent(event);
-	} 
+	}
     }
 
 }
