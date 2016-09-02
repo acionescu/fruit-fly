@@ -61,6 +61,9 @@ EBUS.WS.STATES.CONNECTED = new WsState("CONNECTED", {
     "EBUS:PEER:AUTHENTICATED" : function(ec) {
 	ec.wse.active = true;
 	ec.wse.state = ec.wse.activeState;
+	
+	/* notify the active state that we're authenticated */
+	ec.wse.activeState.handle(ec);
     }
 });
 

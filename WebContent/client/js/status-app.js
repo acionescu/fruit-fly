@@ -15,13 +15,13 @@ StatusAppClient.prototype.setStatus = function(status) {
     })
 }
 
-StatusAppClient.prototype.requestPeersRefresh = function(){
+StatusAppClient.prototype.requestPeersRefresh = function() {
     this.send({
 	et : "STATUS-APP:REQUEST:REFRESH-PEERS"
     });
 }
 
-StatusAppClient.prototype.requestPeerReplace = function(oldPeerId, newPeerId){
+StatusAppClient.prototype.requestPeerReplace = function(oldPeerId, newPeerId) {
     this.send({
 	et : "STATUS-APP:REQUEST:PEER-REPLACE",
 	data : {
@@ -31,8 +31,27 @@ StatusAppClient.prototype.requestPeerReplace = function(oldPeerId, newPeerId){
     });
 }
 
-StatusAppClient.prototype.getRecentActivity = function(){
+StatusAppClient.prototype.getRecentActivity = function() {
     this.send({
 	et : "STATUS-APP:REQUEST:GET-RECENT-ACTIVITY"
+    });
+}
+
+StatusAppClient.prototype.joinChat = function(chatKey) {
+    this.send({
+	et : "PEER:CHAT:JOIN",
+	data : {
+	    chatKey : chatKey
+	}
+    });
+}
+
+StatusAppClient.prototype.sendChatMessage = function(chatKey, message) {
+    this.send({
+	et : "PEER:CHAT:MESSAGE",
+	data : {
+	    chatKey : chatKey,
+	    message: message
+	}
     });
 }

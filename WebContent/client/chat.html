@@ -1,9 +1,20 @@
 <html>
 <head>
 
+<title>Fruit Fly - Anonymous chat</title>
+
+<script src="js/event-bus.js"></script>
+<script src="js/status-app.js"></script>
+<script src="../tp/jquery-2.1.1.js"></script>
+
+
 <style type="text/css">
 body {
 	font-family: sans-serif;
+	overflow: hidden;
+	margin: 0 auto;
+	left: 0px;
+	right: 0px;
 }
 
 #main-container {
@@ -11,17 +22,133 @@ body {
 	height: 100%;
 }
 
+#infoCont {
+	width: 100%;
+	text-align: center;
+	border-bottom: thin solid;
+	height: 50px;
+	padding-top: 20px;
+}
+
+#infoCont div {
+	display: inline-block;
+	position: relative;
+}
+
+#chat-container {
+	width: 100%;
+	height: 100%;
+	/* 	height: 600px; */
+	/*  	position: absolute;  */
+	/* 	top: 0; */
+	/* 	bottom: 0; */
+	/* 	left: 0; */
+	/* 	right: 0; */
+	/* 	margin: auto; */
+}
+
+#chat-area {
+	height: 100%;
+	margin-right: 350px;
+	overflow-x: hidden;
+}
+
+#peers-area {
+	float: right;
+	width: 350px;
+	height: 100%;
+	border-left: thin solid;
+	padding: 10px;
+	border-left: thin solid;
+}
+
+#peers-data {
+	border-top: thin solid;
+	padding-top: 10px;
+	margin-top: 10px;
+}
+
+#peers-data div {
+	margin-bottom: 10px;
+}
+
+#messages-area {
+	/* 	width: 100%; */
+	padding: 10px;
+	/* 	background-color: #eeeeee; */
+	overflow: auto;
+	height: 500px;
+	border-left: thin solid;
+}
+
+.msg-cont {
+	margin-bottom: 10px;
+}
+
+.sender-name-area {
+	width: 350px;
+	float: left;
+	text-align: right;
+	margin-right: 10px;
+	position: relative;
+}
+
+.sender-name-area div {
+	float: right;
+	text-align: right;
+	/*   	display: inline-block;   */
+	position: relative;
+}
+
+.msg-text-area {
+	padding-left: 10px;
+	margin-left: 360px;
+	padding-right: 10px;
+}
+
+#text-area {
+	border-top: thin solid;
+	bottom: 0px;
+	vertical-align: bottom;
+	height: 60px;
+	width: 100%;
+	width: 100%;
+	padding: 10px;
+}
+
+#msg {
+	padding: 5px;
+	height: 100%;
+}
+
+#send-button {
+	height: 100%;
+	float: right;
+	margin-right: 20px;
+	padding : 5px;
+}
+
 #connect-container {
 	/* 	width: 300px; */
 	height: 200px;
 	position: absolute;
 	text-align: center;
-	position: absolute;
 	top: 0;
 	bottom: 0;
 	left: 0;
 	right: 0;
 	margin: auto;
+}
+
+.peer-id {
+	border-radius: 5px;
+	padding: 2px;
+	background-color: #dddddd;
+	/* 	position: absolute; */
+}
+
+.msg-div {
+	padding: 2px;
 }
 </style>
 
@@ -40,33 +167,25 @@ body {
     });
 
     var wse = null;
-    
+
+    var lastColor = "#eeeeee";
+
+    var peers = {
+
+    }
+
     function updateTarget(target) {
-        if (window.location.protocol == 'http:') {
-            document.getElementById('target').value = 'ws://' + window.location.host + target;
-        } else {
-            document.getElementById('target').value = 'wss://' + window.location.host + target;
-        }
+	if (window.location.protocol == 'http:') {
+	    document.getElementById('target').value = 'ws://'
+		    + window.location.host + target;
+	} else {
+	    document.getElementById('target').value = 'wss://'
+		    + window.location.host + target;
+	}
     }
 
     function setConnected(connected) {
-	document.getElementById('connect').disabled = connected;
-	document.getElementById('disconnect').disabled = !connected;
-	document.getElementById('echo').disabled = !connected;
-	document.getElementById('refresh-peers').disabled = !connected;
-	setVisible('data-container', connected);
-	setVisible('right-container', connected);
-	setVisible('followers-container', connected);
-	setVisible('info-container', !connected);
 
-	if (!connected) {
-	    /* stop refreshing recent activity */
-	    clearInterval(refreshInterval);
-
-	    $("body").removeClass("no-scroll");
-	} else {
-	    $("body").addClass("no-scroll");
-	}
     }
 
     function setVisible(id, visible) {
@@ -87,7 +206,6 @@ body {
 	var wshandler = {
 	    onopen : function() {
 		setConnected(true);
-		$("#infoCont").hide();
 		log('Info: WebSocket connection opened.');
 	    },
 	    onmessage : function(event) {
@@ -105,24 +223,179 @@ body {
 	};
 
 	wse = new StatusAppClient(target, true, wshandler, appState);
+
     }
 
     function disconnect() {
 	wse.close();
 	setConnected(false);
     }
+
+    function joinChat() {
+	if (wse) {
+	    sendJoinChatRequest();
+	} else {
+	    connect();
+	}
+    }
+
+    function sendJoinChatRequest() {
+	var chatKey = $("#chatKey").val();
+	wse.joinChat(chatKey);
+    }
+
+    function initNode(event) {
+	var model = event.data.model;
+	$("#infoCont").append($("<label>").text("Connected as ")).append(
+		$("<div>").text(model.clientId).addClass("peer-id"));
+    }
+
+    function initChat(event) {
+	$("#connect-container").hide();
+	$("#chat-container").show();
+
+	if (event.data.participants) {
+	    event.data.participants.forEach(function(p) {
+		addChatParticipant(p);
+	    });
+	}
+    }
+
+    function addChatParticipant(peerId) {
+
+	/* generate a color for this peer */
+	lastColor = generateColors(parseInt(lastColor.substring(1), 16),
+		30303040, 1)[0];
+
+	peers[peerId] = {
+	    color : lastColor
+	}
+
+	$("#peers-data").append(
+		$("<div>").attr("id", peerId).text(peerId).addClass("peer-id")
+			.css('background-color', lastColor));
+    }
+
+    function removeChatParticipant(peerId) {
+	$("#peers-data").find("#" + peerId).remove();
+
+	delete peers[peerId];
+    }
+
+    function addChatMessage(message, from) {
+	var alias = from + ": ";
+	if (from == wse.remoteId) {
+	    alias = "Me: ";
+	}
+
+	appendChatMessage(message, alias, from);
+	autoscroll("messages-area");
+
+    }
+
+    function appendChatMessage(message, alias, from) {
+	var msgArea = $("#messages-area");
+
+	var msgCont = $("<div>").addClass("msg-cont");
+
+	var na = $("<div>").addClass("sender-name-area");
+	var ta = $("<div>").addClass("msg-text-area");
+
+	var color = "#eeeeee";
+
+	if (peers[from]) {
+	    color = peers[from].color;
+	}
+
+	na.append($("<div>").text(alias).addClass("peer-id").css(
+		'background-color', color));
+	ta.append($("<div>").text(message).addClass("msg-div"));
+
+	msgCont.append(na);
+	msgCont.append(ta);
+
+	msgArea.append(msgCont);
+    }
+
+    function sendMessage() {
+	var chatKey = $("#chatKey").val();
+	var message = $("#msg").val();
+
+	if (message.trim() != "") {
+	    addChatMessage(message, wse.remoteId);
+
+	    wse.sendChatMessage(chatKey, message);
+	}
+	$("#msg").val('');
+    }
+
+    function onKeyPress(event) {
+
+	var key = event.keyCode;
+	// If the user has pressed enter
+	if (key == 13) {
+	    sendMessage();
+	    return false;
+	} else {
+	    return true;
+	}
+    }
+
+    function autoscroll(elemId) {
+	var objDiv = document.getElementById(elemId);
+	objDiv.scrollTop = objDiv.scrollHeight;
+    }
+
+    function generateColors(startCol, step, count) {
+	var out = [];
+	var nextColor = startCol;
+
+	for (var i = 0; i < count; i++) {
+	    nextColor += step;
+	    color = '#' + ('00000' + (nextColor | 0).toString(16)).substr(-6);
+	    out.push(color);
+	}
+
+	return out;
+    }
+
+    var appState = new WsState("APP_STATE", {
+
+	/* now we can init */
+	"STATUS-APP:PEER:INIT" : function(ec) {
+	    initNode(ec.event);
+	    sendJoinChatRequest();
+	},
+
+	"PEER:CHAT:INIT" : function(ec) {
+	    initChat(ec.event);
+	},
+
+	"PEER:CHAT:JOINED" : function(ec) {
+	    addChatParticipant(ec.event.data.peerId);
+	},
+
+	"PEER:CHAT:LEFT" : function(ec) {
+	    removeChatParticipant(ec.event.data.peerId);
+	},
+
+	"PEER:CHAT:MESSAGE" : function(ec) {
+	    addChatMessage(ec.event.data.message, ec.event.header.from);
+	}
+    });
 </script>
 
 </head>
 <body>
 
-	<div class="noscript">
-		<h2 style="color: #ff0000">Seems your browser doesn't support
-			Javascript! Websockets rely on Javascript being enabled. Please
-			enable Javascript and reload this page!</h2>
-	</div>
-	<div id="infoCont" style="display: none;"></div>
+
+
 	<div id="main-container">
+		<div class="noscript">
+			<h2 style="color: #ff0000">Seems your browser doesn't support
+				Javascript! Websockets rely on Javascript being enabled. Please
+				enable Javascript and reload this page!</h2>
+		</div>
 
 		<div id="connect-container">
 			<h3>
@@ -130,9 +403,34 @@ body {
 			</h3>
 			<div>
 				<input id="target" type="text" size="40" style="width: 330px"
-					hidden="true" /> <input type="text" size="50">
-				<button onclick="connect()">Connect</button>
+					hidden="true" /> <input id="chatKey" type="text" size="50" />
+				<button onclick="joinChat()" style="height: 30px">Join</button>
 			</div>
+			<div style="margin-top: 20px; color: #aaaaaa; font-size: large;">
+				Enter the secret key, shared with your partner/group, and start
+				chatting.
+				<p>Leave it empty to join the public chat.</p>
+			</div>
+
+		</div>
+
+		<div id="chat-container" style="display: none;">
+			<div id="peers-area">
+				<label for="peers-data">Chatting with:</label>
+				<div id="peers-data"></div>
+			</div>
+			<div id="chat-area">
+				<div id="infoCont"></div>
+				<div id="messages-area"></div>
+				<div id="text-area">
+					<button id="send-button" onclick="sendMessage()">Send</button>
+					<textarea id="msg" rows="3" cols="150"
+						onkeypress="onKeyPress(event)"></textarea>
+
+				</div>
+
+			</div>
+
 
 		</div>
 	</div>

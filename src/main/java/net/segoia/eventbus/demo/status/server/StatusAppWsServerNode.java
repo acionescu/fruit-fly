@@ -37,8 +37,10 @@ import net.segoia.event.eventbus.peers.events.PeerRequestUnregisterEvent;
 import net.segoia.event.eventbus.peers.events.PeerUnregisteredEvent;
 import net.segoia.event.eventbus.util.EBus;
 import net.segoia.eventbus.demo.chat.Chat;
+import net.segoia.eventbus.demo.chat.events.ChatData;
 import net.segoia.eventbus.demo.chat.events.ChatInitData;
 import net.segoia.eventbus.demo.chat.events.ChatInitEvent;
+import net.segoia.eventbus.demo.chat.events.ChatJoinRequestEvent;
 import net.segoia.eventbus.demo.chat.events.ChatJoinedEvent;
 import net.segoia.eventbus.demo.chat.events.ChatLeftEvent;
 import net.segoia.eventbus.demo.chat.events.ChatMessage;
@@ -185,38 +187,46 @@ public class StatusAppWsServerNode extends WebsocketServerEventNode {
 		event.setHandled();
 		return;
 	    }
-	    
+
 	    chat.setParticipants(chatData.getParticipants());
 	});
-	
-	addEventHandler(ChatJoinedEvent.class,(c)->{
+
+	addEventHandler(ChatJoinedEvent.class, (c) -> {
 	    ChatJoinedEvent event = c.event();
 	    ChatPeerData data = event.getData();
-	    
+
 	    Chat chat = model.getChat(data.getChatKey());
-	    if(chat != null) {
+	    if (chat != null) {
 		chat.addParticipant(data.getPeerId());
 	    }
 	});
-	
-	addEventHandler(ChatLeftEvent.class, (c)->{
+
+	addEventHandler(ChatLeftEvent.class, (c) -> {
 	    ChatLeftEvent event = c.event();
 	    ChatPeerData data = event.getData();
-	    
+
 	    Chat chat = model.getChat(data.getChatKey());
-	    if(chat != null) {
+	    if (chat != null) {
 		chat.removeParticipant(data.getPeerId());
 	    }
 	});
-	
-	addEventHandler(ChatMessageEvent.class, (c)->{
+
+	addEventHandler(ChatMessageEvent.class, (c) -> {
+	    
 	    ChatMessageEvent event = c.event();
 	    ChatMessage data = event.getData();
-	    if(model.getChat(data.getChatKey()) == null ) {
+	    
+	    if (model.getChat(data.getChatKey()) == null) {
 		/* if we didn't join the chat, don't forward this message to the client */
 		event.setHandled();
+		
 		return;
 	    }
+	    
+	    /* we want to remember the route to this peer */
+	    
+	    updateRoute(event);
+	    
 	});
     }
 
@@ -370,20 +380,37 @@ public class StatusAppWsServerNode extends WebsocketServerEventNode {
 	    event.setHandled();
 
 	});
-	
+
 	/* chat */
-	
-	wsEventsBus.addEventHandler(ChatMessageEvent.class, (c)->{
-	  ChatMessageEvent event = c.event();
-	ChatMessage data = event.getData();
-	  if(model.getChat(data.getChatKey()) == null) {
-	      /* if we don't take part in the chat don't forward the message */
-	      event.setHandled();
-	      return;
-	  }
+
+	wsEventsBus.addEventHandler(ChatJoinRequestEvent.class, (c) -> {
+	    ChatJoinRequestEvent event = c.event();
+	    ChatData data = event.getData();
+	    String chatKey = data.getChatKey();
+	    if (chatKey == null) {
+		event.setHandled();
+		return;
+	    }
+	    Chat chat = model.getChat(chatKey);
+	    if (chat == null) {
+		chat = new Chat(chatKey);
+		model.addChat(chat);
+	    }
 	});
-	
-	
+
+	wsEventsBus.addEventHandler(ChatMessageEvent.class, (c) -> {
+	    ChatMessageEvent event = c.event();
+	    ChatMessage data = event.getData();
+	    Chat chat = model.getChat(data.getChatKey());
+	    if (chat == null) {
+		/* if we don't take part in the chat don't forward the message */
+		event.setHandled();
+		return;
+	    }
+	    
+	    forwardTo(event, chat.getParticipants());
+	    event.setHandled();
+	});
 
 	/* register for all events that are not requests */
 	EBus.getMainNode().registerPeer(this, acceptedServerEvents);
@@ -404,6 +431,7 @@ public class StatusAppWsServerNode extends WebsocketServerEventNode {
     @Override
     protected EventTracker handleServerEvent(Event event) {
 	if (!event.isHandled() && passToWsClientCond.test(new EventContext(event, null))) {
+	    System.out.println("sending "+event);
 	    return super.handleServerEvent(event);
 	}
 	return null;

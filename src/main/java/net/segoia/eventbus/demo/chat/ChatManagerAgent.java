@@ -5,9 +5,11 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import net.segoia.event.conditions.TrueCondition;
 import net.segoia.event.eventbus.Event;
 import net.segoia.event.eventbus.constants.EventParams;
 import net.segoia.event.eventbus.peers.AgentNode;
+import net.segoia.event.eventbus.util.EBus;
 import net.segoia.eventbus.demo.chat.events.ChatData;
 import net.segoia.eventbus.demo.chat.events.ChatInitEvent;
 import net.segoia.eventbus.demo.chat.events.ChatJoinRequestEvent;
@@ -32,6 +34,9 @@ public class ChatManagerAgent extends AgentNode {
 	super.nodeInit();
 
 	chats = new HashMap<>();
+	
+	mainNode = EBus.getMainNode();
+	mainNode.registerPeerAsAgent(this, new TrueCondition());
     }
 
     /*
@@ -84,7 +89,7 @@ public class ChatManagerAgent extends AgentNode {
 	    ChatInitEvent chatInitEvent = new ChatInitEvent(chatKey, partnersSnapshot);
 	    /* send a chat init event to the new peer */
 	    forwardTo(chatInitEvent, newPeerId);
-
+	    System.out.println("sending chat init to "+newPeerId);
 	    /* finally, add the new peer to the participants set */
 	    chatPartners.add(newPeerId);
 

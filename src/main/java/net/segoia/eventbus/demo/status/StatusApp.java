@@ -21,6 +21,7 @@ import javax.servlet.ServletContextListener;
 import javax.servlet.annotation.WebListener;
 
 import net.segoia.event.eventbus.util.EBus;
+import net.segoia.eventbus.demo.chat.ChatManagerAgent;
 
 @WebListener
 public class StatusApp implements ServletContextListener {
@@ -38,6 +39,8 @@ public class StatusApp implements ServletContextListener {
 	
 	/* start app init agent */
 	new StatusAppManagerAgent();
+	
+	new ChatManagerAgent();
 	
 	/* start the stats listener */
 	new StatusAppStatsNode().init();
