@@ -89,7 +89,7 @@ public class ChatManagerAgent extends AgentNode {
 	    ChatInitEvent chatInitEvent = new ChatInitEvent(chatKey, partnersSnapshot);
 	    /* send a chat init event to the new peer */
 	    forwardTo(chatInitEvent, newPeerId);
-	    System.out.println("sending chat init to "+newPeerId);
+	    
 	    /* finally, add the new peer to the participants set */
 	    chatPartners.add(newPeerId);
 

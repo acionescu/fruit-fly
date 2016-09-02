@@ -431,7 +431,6 @@ public class StatusAppWsServerNode extends WebsocketServerEventNode {
     @Override
     protected EventTracker handleServerEvent(Event event) {
 	if (!event.isHandled() && passToWsClientCond.test(new EventContext(event, null))) {
-	    System.out.println("sending "+event);
 	    return super.handleServerEvent(event);
 	}
 	return null;
