@@ -50,7 +50,7 @@ public class ChatManagerAgent extends AgentNode {
 	super.nodeInit();
 
 	chats = new HashMap<>();
-	
+
 	mainNode = EBus.getMainNode();
 	mainNode.registerPeerAsAgent(this, new TrueCondition());
     }
@@ -105,7 +105,7 @@ public class ChatManagerAgent extends AgentNode {
 	    ChatInitEvent chatInitEvent = new ChatInitEvent(chatKey, partnersSnapshot);
 	    /* send a chat init event to the new peer */
 	    forwardTo(chatInitEvent, newPeerId);
-	    
+
 	    /* finally, add the new peer to the participants set */
 	    chatPartners.add(newPeerId);
 
@@ -113,7 +113,7 @@ public class ChatManagerAgent extends AgentNode {
 
 	addEventHandler(ChatLeaveRequestEvent.class, (c) -> {
 	    ChatLeaveRequestEvent event = c.event();
-	    removePeerFromChat(event.getData().getChatKey(), event.from());
+	    removePeerFromChat(event.getData().getChatKey(), event.from(), true);
 	});
     }
 
@@ -121,7 +121,15 @@ public class ChatManagerAgent extends AgentNode {
 	return (Set<String>) ((HashSet<String>) source).clone();
     }
 
-    private void removePeerFromChat(String chatKey, String peerId) {
+    /**
+     * Remove a peer from chat
+     * 
+     * @param chatKey
+     * @param peerId
+     * @param cleanUp
+     * @return - true if the chat is empty ( has no more participants ) false otherwise
+     */
+    private boolean removePeerFromChat(String chatKey, String peerId, boolean cleanUp) {
 	Set<String> ccp = getChatParticipants(chatKey);
 
 	/* remove the peer from chat participants */
@@ -130,16 +138,29 @@ public class ChatManagerAgent extends AgentNode {
 	if (ccp.size() > 0) {
 	    /* notify the chat partners that the peer left */
 	    forwardTo(new ChatLeftEvent(chatKey, peerId), ccp);
+	    return false;
 	} else {
-	    /* this chat has no participants, remove it */
-	    removeChat(chatKey);
+	    if (cleanUp) {
+		/* this chat has no participants, remove it */
+		removeChat(chatKey);
+	    }
+	    return true;
 	}
 
     }
 
     private void removePeerFromAllChats(String peerId) {
+	Set<String> chatsToRemove = new HashSet<>();
 	chats.keySet().forEach((chatkey) -> {
-	    removePeerFromChat(chatkey, peerId);
+	    boolean toRemove = removePeerFromChat(chatkey, peerId, false);
+	    if (toRemove) {
+		chatsToRemove.add(chatkey);
+	    }
+	});
+
+	/* remove unused chats */
+	chatsToRemove.forEach((chatKey) -> {
+	    removeChat(chatKey);
 	});
     }
 
