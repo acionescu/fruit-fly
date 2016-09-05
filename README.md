@@ -1,5 +1,16 @@
+#Intro
 
-##This is an anonymous status sharing demo app, built with [web-events](https://github.com/acionescu/web-events) and websockets
+This is a collection of event based demo apps, built with [web-events](https://github.com/acionescu/web-events) and websockets
+
+# The anonymous chat app
+
+Users can chat anonymously, either publicly or privately, by using a shared secret key
+
+The demo [here](https://fruit-fly.herokuapp.com/client/chat.html). 
+
+
+# The status sharing app
+
 
 You can check the demo [here](https://fruit-fly.herokuapp.com/client/statusapp.html)
 
@@ -42,4 +53,6 @@ For now, here are the specs for the current proof of concept:
 * Security : 
  * The app will permit only a certain level of activity per ip and connection
  * If that is exceeded, it will close/refuse the connection  
+ 
+ 
  
